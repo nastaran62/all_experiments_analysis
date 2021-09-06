@@ -1,0 +1,11 @@
+# .gitignore
+__pycache__
+.vscode
+*.pyc
+*.csv
+*.pickle
+*.h5
+exp1_0
+exp1_1
+
+
