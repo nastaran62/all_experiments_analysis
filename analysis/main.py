@@ -6,4 +6,4 @@ from exp1_1.exp1_1_lstm import cross_subject as exp1_1_lstm_cross_subject
 
 LABEL_TYPE = "valence"
 
-exp1_1_lstm_cross_subject(label_type=LABEL_TYPE, window_size=5)
+exp1_1_lstm_cross_subject(label_type=LABEL_TYPE, window_size=1)
