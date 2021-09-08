@@ -15,7 +15,7 @@ emotions = {"Anger":[0, "4", "2"],
              "Neutral":[3, "3", "3"],
              "Sadness":[4, "2", "2"]}
 
-def partitioning_and_getting_features(input_path, label_path, trial_size=60, window_size=0):
+def partitioning_and_getting_features(input_path, label_path, window_size=0):
     '''
     Reads all files, partition them based on trial size and save features for
     all partitions of all trials of all participants

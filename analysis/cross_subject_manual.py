@@ -1,12 +1,12 @@
 import numpy as np
 import multiprocessing
 from sklearn.model_selection import KFold
-from classification import ModalityClassification, feature_selection_random_forest, svm_classification, random_forest
+from classification import multimodal_classification, voting_fusion
 #from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import precision_recall_fscore_support, classification_report, accuracy_score
 
     
 def kfold_evaluation(eeg, gsr, ppg, labels, k=5):
+    print(eeg.shape, gsr.shape, ppg.shape, labels.shape)
     # Shuffling
     permutation = np.random.permutation(labels.shape[0])
     eeg = eeg[permutation, :]
@@ -28,47 +28,19 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=5):
         gsr_train, gsr_test = gsr[train_index, :], gsr[test_index, :]
         ppg_train, ppg_test = ppg[train_index, :], ppg[test_index, :]
         train_labels, test_labels = labels[train_index], labels[test_index]
-        eeg_queue = multiprocessing.Queue()
-        eeg_classifier = \
-            ModalityClassification(eeg_train,
-                                   eeg_test,
-                                   train_labels,
-                                   test_labels,
-                                   eeg_queue,
-                                   type="random_forest",
-                                   model_name="eeg.pickle")
+        eeg_parameters = eeg_train, eeg_test, "random_forest", "eeg_model.pickle"
+        gsr_parameters = gsr_train, gsr_test, "random_forest", "gsr_model.pickle"
+        ppg_parameters = ppg_train, ppg_test, "random_forest", "ppg_model.pickle"
         
-        gsr_queue = multiprocessing.Queue()
-        gsr_classifier = \
-            ModalityClassification(gsr_train,
-                                   gsr_test,
-                                   train_labels,
-                                   test_labels,
-                                   gsr_queue,
-                                   type="random_forest",
-                                   model_name="gsr.pickle")
-        
-        ppg_queue = multiprocessing.Queue()
-        ppg_classifier = \
-            ModalityClassification(ppg_train,
-                                   ppg_test,
-                                   train_labels,
-                                   test_labels,
-                                   ppg_queue,
-                                   type="random_forest",
-                                   model_name="ppg.pickle")
-        
-        eeg_classifier.start()
-        gsr_classifier.start()
-        ppg_classifier.start()
-        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
-        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
-        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
-
-        eeg_classifier.join()
-        gsr_classifier.join()
-        ppg_classifier.join()
-        
+        eeg_result, gsr_result, ppg_result = \
+            multimodal_classification(train_labels,
+                                      test_labels,
+                                      eeg=eeg_parameters,
+                                      gsr=gsr_parameters,
+                                      ppg=ppg_parameters)
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore) 
         
@@ -79,22 +51,10 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=5):
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
  
-        i = 0
-        preds_fusion = []
-        for i in range(len(eeg_preds)):
-            if eeg_preds[i] + ppg_preds[i] + gsr_preds[i] > 1 :
-                preds_fusion.append(1)
-            else:
-                preds_fusion.append(0)
-        
-        acc = accuracy_score(preds_fusion, test_labels)
-        print(classification_report(test_labels, preds_fusion))
-        precision, recall, f_score, support = \
-            precision_recall_fscore_support(test_labels,
-                                            preds_fusion,
-                                            average='weighted')
-        all_fusion_accuracy.append(acc)
-        all_fusion_fscore.append(f_score)
+        fusion_accuracy, fusion_fscore = \
+            voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
+        all_fusion_accuracy.append(fusion_accuracy)
+        all_fusion_fscore.append(fusion_fscore)
 
     eeg_accuracy = np.mean(np.array(all_eeg_accuracy))
     eeg_fscore = np.mean(np.array(all_eeg_fscore))
@@ -131,46 +91,20 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5):
         gsr_train, gsr_test = gsr[train_index, :], gsr[test_index, :]
         ppg_train, ppg_test = ppg[train_index, :], ppg[test_index, :]
         train_labels, test_labels = labels[train_index], labels[test_index]
-        eeg_queue = multiprocessing.Queue()
-        eeg_classifier = \
-            ModalityClassification(eeg_train,
-                                   eeg_test,
-                                   train_labels,
-                                   test_labels,
-                                   eeg_queue,
-                                   type="lstm",
-                                   model_name="eeg_lstm.h5")
         
-        gsr_queue = multiprocessing.Queue()
-        gsr_classifier = \
-            ModalityClassification(gsr_train,
-                                   gsr_test,
-                                   train_labels,
-                                   test_labels,
-                                   gsr_queue,
-                                   type="lstm",
-                                   model_name="gsr_lstm.h5")
+        eeg_parameters = eeg_train, eeg_test, "lstm", "eeg_lstm.h5"
+        gsr_parameters = gsr_train, gsr_test, "lstm", "gsr_lstm.h5"
+        ppg_parameters = ppg_train, ppg_test, "lstm", "ppg_lstm.h5"
         
-        ppg_queue = multiprocessing.Queue()
-        ppg_classifier = \
-            ModalityClassification(ppg_train,
-                                   ppg_test,
-                                   train_labels,
-                                   test_labels,
-                                   ppg_queue,
-                                   type="lstm",
-                                   model_name="ppg_lstm.h5")
-        
-        eeg_classifier.start()
-        gsr_classifier.start()
-        ppg_classifier.start()
-        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
-        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
-        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
-
-        eeg_classifier.join()
-        gsr_classifier.join()
-        ppg_classifier.join()
+        eeg_result, gsr_result, ppg_result = \
+            multimodal_classification(train_labels,
+                                      test_labels,
+                                      eeg=eeg_parameters,
+                                      gsr=gsr_parameters,
+                                      ppg=ppg_parameters)
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
 
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore) 
@@ -182,22 +116,10 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5):
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
  
-        i = 0
-        preds_fusion = []
-        for i in range(len(eeg_preds)):
-            if eeg_preds[i] + ppg_preds[i] + gsr_preds[i] > 1 :
-                preds_fusion.append(1)
-            else:
-                preds_fusion.append(0)
-        
-        acc = accuracy_score(preds_fusion, test_labels)
-        print(classification_report(test_labels, preds_fusion))
-        precision, recall, f_score, support = \
-            precision_recall_fscore_support(test_labels,
-                                            preds_fusion,
-                                            average='weighted')
-        all_fusion_accuracy.append(acc)
-        all_fusion_fscore.append(f_score)
+        fusion_accuracy, fusion_fscore = \
+            voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
+        all_fusion_accuracy.append(fusion_accuracy)
+        all_fusion_fscore.append(fusion_fscore)
 
     print(all_eeg_accuracy)
     print(all_gsr_accuracy)

@@ -25,69 +25,6 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support, \
     mean_squared_error, classification_report, accuracy_score
 
-def feature_selection_random_forest(x_train, x_test, y_train, y_test, num_features=10):
-    train_mean = np.mean(x_train)
-    train_std = np.std(x_train)
-    x_train = (x_train - train_mean) / train_std
-    x_test = (x_test - train_mean) / train_std
-
-    clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
-    rfe = RFE(clf, num_features)
-    fit = rfe.fit(x_train, y_train)
-    print("Num Features: %d" % fit.n_features_)
-    print("Selected Features: %s" % fit.support_)
-    print("Feature Ranking: %s" % fit.ranking_)
-    x_train = fit.transform(x_train)
-    x_test = fit.transform(x_test)
-    clf.fit(x_train, y_train)
-    pred_values = clf.predict(x_test)
-    acc = accuracy_score(pred_values, y_test)
-    print(classification_report(y_test, pred_values))
-    precision, recall, f_score, support = \
-        precision_recall_fscore_support(y_test,
-                                        pred_values,
-                                        average='weighted')
-    return acc, f_score, pred_values
-
-def random_forest(x_train, x_test, y_train, y_test):
-    train_mean = np.mean(x_train)
-    train_std = np.std(x_train)
-    x_train = (x_train - train_mean) / train_std
-    x_test = (x_test - train_mean) / train_std
-
-    clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
-    clf.fit(x_train, y_train)
-    pred_values = clf.predict(x_test)
-    acc = accuracy_score(pred_values, y_test)
-    print(classification_report(y_test, pred_values))
-    precision, recall, f_score, support = \
-        precision_recall_fscore_support(y_test,
-                                        pred_values,
-                                        average='weighted')
-    return acc, f_score, pred_values
-
-def svm_classification(x_train, x_test, y_train, y_test):
-    train_mean = np.mean(x_train)
-    train_std = np.std(x_train)
-    x_train = (x_train - train_mean) / train_std
-    x_test = (x_test - train_mean) / train_std
-    clf = svm.SVC(probability=True,
-                  class_weight='balanced',
-                  C=500,
-                  random_state=100,
-                  kernel='rbf')
-    clf.fit(x_train, y_train)
-    pred_values = clf.predict(x_test)
-    acc = accuracy_score(pred_values, y_test)
-    print(classification_report(y_test, pred_values))
-    precision, recall, f_score, support = \
-        precision_recall_fscore_support(y_test,
-                                        pred_values,
-                                        average='weighted')
-    print(acc)
-    return acc, f_score, pred_values
-
-
 class ModalityClassification(multiprocessing.Process):
     def __init__(self, train_x, test_x, train_y, test_y, queue, classes=[0, 1], type="simple", model_name="models/eeg_model.py"):
         super().__init__()
@@ -323,7 +260,6 @@ class ModalityClassification(multiprocessing.Process):
         print(accuracy)
         return preds_physiological
 
-
 def simple_lstm(input_shape, lstm_layers, num_classes, dropout=0.7):
     '''
     Model definition
@@ -343,3 +279,81 @@ def simple_lstm(input_shape, lstm_layers, num_classes, dropout=0.7):
                   optimizer=optimizers.Adam(lr=0.01),
                   metrics=['accuracy'])
     return model
+
+
+def multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
+    classifiers = []
+    eeg_train, eeg_test, eeg_classification_method, eeg_model_name = eeg   
+    eeg_queue = multiprocessing.Queue()
+    eeg_classifier = \
+        ModalityClassification(eeg_train,
+                                eeg_test,
+                                train_labels,
+                                test_labels,
+                                eeg_queue,
+                                type=eeg_classification_method,
+                                model_name=eeg_model_name)
+    classifiers.append(eeg_classifier)
+     
+    gsr_train, gsr_test, gsr_classification_method, gsr_model_name = gsr     
+    gsr_queue = multiprocessing.Queue()
+    gsr_classifier = \
+        ModalityClassification(gsr_train,
+                                gsr_test,
+                                train_labels,
+                                test_labels,
+                                gsr_queue,
+                                type=gsr_classification_method,
+                                model_name=gsr_model_name)
+    classifiers.append(gsr_classifier)
+    
+
+    ppg_train, ppg_test, ppg_classification_method, ppg_model_name = ppg       
+    ppg_queue = multiprocessing.Queue()
+    ppg_classifier = \
+        ModalityClassification(ppg_train,
+                                ppg_test,
+                                train_labels,
+                                test_labels,
+                                ppg_queue,
+                                type=ppg_classification_method,
+                                model_name=ppg_model_name)
+    classifiers.append(ppg_classifier)
+
+        
+    for classifier in classifiers:
+        classifier.start()
+
+    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
+    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
+    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
+
+    for classifier in classifiers:
+        classifier.join()
+
+    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities
+    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities
+    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities
+
+    return eeg, gsr, ppg
+
+def voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
+    preds_fusion = []
+    for i in range(len(eeg_preds)):
+        if eeg_preds[i] + ppg_preds[i] + gsr_preds[i] > 1 :
+            preds_fusion.append(1)
+        else:
+            preds_fusion.append(0)
+    accuracy = accuracy_score(preds_fusion, test_labels)
+    print(classification_report(test_labels, preds_fusion))
+    precision, recall, fscore, support = \
+        precision_recall_fscore_support(test_labels,
+                                        preds_fusion,
+                                        average='weighted')
+    return accuracy, fscore
+
+def equal_fusion():
+    pass
+
+def weighted_fusion():
+    pass

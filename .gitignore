@@ -5,7 +5,5 @@ __pycache__
 *.csv
 *.pickle
 *.h5
-exp1_0
-exp1_1
-
-
+experimental_data/exp1_0
+experimental_data/exp1_1

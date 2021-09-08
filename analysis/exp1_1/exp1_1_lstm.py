@@ -1,8 +1,8 @@
-from subject_dependent import subject_dependent_evaluation
+from subject_dependent import subject_dependent_lstm_evaluation
 import numpy as np
 import pickle
-from cross_subject_manual import kfold_evaluation, lstm_kfold_evaluation
-from subject_independent import subject_independent_cross_validation
+from cross_subject_manual import lstm_kfold_evaluation
+from subject_independent import subject_independent_lstm_cross_validation
 from exp1_1.feature_extraction import partitioning_and_getting_features
 
 PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
@@ -69,40 +69,47 @@ def cross_subject(label_type="arousal", window_size=0):
     print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
 
 def subject_dependent(label_type="arousal", window_size=0):
-    def prepare_data_for_subject_dependent(data):
+    def prepare_data_for_subject_dependent(data, label=False):
         all_parts = []
         for trial in data:
             for part in trial:
-                for window in part:
-                    all_parts.append(window)
+                if label is True:
+                    all_parts.append(part[0])
+                else:
+                    all_parts.append(part)
         return np.array(all_parts)
     
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
-    subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
+    subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
                                  fold=4)
 
 def subject_independent(label_type="arousal", window_size=0):
-    def make_train_test_set(data, train_participants, test_participants):
+    def make_train_test_set(data, train_participants, test_participants, label=False):
         test_trials = []
         train_trials = []
         p = 0
         for participant in data:
             for trial in participant:
                 for part in trial:
-                    for window in part:
-                        if p in train_participants:
-                            train_trials.append(np.array(window))
-                        elif p in test_participants:
-                            test_trials.append(np.array(window))
+                    if p in train_participants:
+                        if label is True:
+                            train_trials.append(part[0])
+                        else:
+                            train_trials.append(np.array(part))
+                    elif p in test_participants:
+                        if label is True:
+                            test_trials.append(part[0])
+                        else:
+                            test_trials.append(np.array(part))
             p += 1
         return np.array(train_trials), np.array(test_trials)
 
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
-    subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
+    subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
                                          PARTICIPANTS,
                                          make_train_test_set,
                                          fold=3)

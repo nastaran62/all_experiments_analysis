@@ -37,28 +37,18 @@ def prepare_data(label_type="arousal", window_size=0):
     return all_eeg, all_gsr, all_ppg, labels
 
 def cross_subject(label_type="arousal", window_size=0):
-    def make_np_array(data):
-        trials = []
-        p = 0
-        for participant in data:
-            for trial in participant:
-                if p in PARTICIPANTS:
-                    for window in trial:
-                        trials.append(np.array(window))
-            p += 1
-        return np.array(trials)
-
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
     print(np.array(all_eeg).shape, np.array(all_gsr).shape, np.array(all_ppg).shape)
-    eeg = make_np_array(all_eeg)
+    print(all_eeg.shape)
+    eeg = all_eeg.reshape(-1, *all_eeg.shape[-1:])
     print(eeg.shape, "********************************")
-    gsr = make_np_array(all_gsr)
+    gsr = all_gsr.reshape(-1, *all_gsr.shape[-1:])
     print(gsr.shape, "********************************")
-    ppg = make_np_array(all_ppg)
+    ppg = all_ppg.reshape(-1, *all_ppg.shape[-1:])
     print(ppg.shape, "********************************")
 
-    labels = make_np_array(all_labels)
+    labels =all_labels.reshape(-1)
     print(labels.shape, "********************************")
     eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
         eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
@@ -69,13 +59,17 @@ def cross_subject(label_type="arousal", window_size=0):
     print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
 
 def subject_dependent(label_type="arousal", window_size=0):
-    def prepare_data_for_subject_dependent(data):
-        all_parts = []
-        for trial in data:
-            for window in trial:
-                all_parts.append(window)
-        return np.array(all_parts)
-    
+    def prepare_data_for_subject_dependent(data, label=False):
+        if label is True:
+            data = data.reshape(-1)
+            print(data.shape)
+            return data
+        else:
+            print(data.shape, "*************************")
+            data = data.reshape(-1, data.shape[-1])
+            print(data.shape)
+            return data
+        
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
     subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 

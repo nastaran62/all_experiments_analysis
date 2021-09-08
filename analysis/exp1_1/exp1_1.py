@@ -19,7 +19,7 @@ def prepare_data(label_type="arousal", window_size=0):
     pickle.dump(all_gsr, open("exp1_1/data/gsr.pickle", "wb"))
     pickle.dump(all_ppg, open("exp1_1/data/ppg.pickle", "wb"))
     pickle.dump((all_emotions, all_arousals, all_valences), open("exp1_1/data/labels.pickle", "wb"))
-    '''
+    #'''
     all_eeg = pickle.load(open("exp1_1/data/eeg.pickle", "rb"))
     all_gsr = pickle.load(open("exp1_1/data/gsr.pickle", "rb"))
     all_ppg = pickle.load(open("exp1_1/data/ppg.pickle", "rb"))

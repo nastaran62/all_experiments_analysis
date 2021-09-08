@@ -68,21 +68,22 @@ class EegPreprocessing():
             self._mne_raw.set_eeg_reference(referencing_value)
         self._mne_raw.apply_proj()
 
-    def interpolate_bad_channels(self):
+    def interpolate_bad_channels(self, bad_channels=None):
         '''
         Bad channel removal (interpolate bad channels)
         '''
-        self._mne_raw.load_data()
-        self.display()
-        bad_channels = ['Fp2']
-        
-        while True:
-            bad_channel = input()
-            print("input", bad_channel)
-            if bad_channel == "q" or bad_channel == "Q":
-                break
-            bad_channels.append(bad_channel)
-        print(bad_channels)
+        if bad_channels is None:
+            self._mne_raw.load_data()
+            self.display()
+            bad_channels = ['Fp2']
+            
+            while True:
+                bad_channel = input()
+                print("input", bad_channel)
+                if bad_channel == "q" or bad_channel == "Q":
+                    break
+                bad_channels.append(bad_channel)
+            print(bad_channels)
         
         
         self._mne_raw.info['bads'] = bad_channels

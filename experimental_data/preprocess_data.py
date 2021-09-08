@@ -99,7 +99,8 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
     output_path = "exp1_0/preprocessed_data"
     all_participants = os.listdir(input_path)
     all_participants.sort()
-    for participant in all_participants:
+    for participant in all_participants[22:23]:
+        print(participant)
         participant_output_path = os.path.join(output_path, participant)
         if not os.path.exists(participant_output_path):
             os.mkdir(participant_output_path)
@@ -119,12 +120,12 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                                     channel_names=channel_names,
                                     sampling_rate=128)
                 preprocessing.filter_data()
-                preprocessing.interpolate_bad_channels()
+                preprocessing.interpolate_bad_channels(bad_channels=['Fp2', 'P3', 'P4', 'T5'])
                 preprocessing.rereferencing(referencing_value='average')
-                preprocessing.channel_wise_baseline_normalization(baseline_duration=baseline_duration)
+                #preprocessing.channel_wise_baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()
-                preprocessed_data = \
-                    preprocessed_data[:, start_trim*128:-end_trim*128]
+                #preprocessed_data = \
+                #    preprocessed_data[:, start_trim*128:-end_trim*128]
                 file_name = os.path.join(eeg_output_path, eeg_file)
                 np.savetxt(file_name, preprocessed_data)
 
@@ -141,10 +142,10 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                     GsrPreprocessing(gsr_data[:,0],
                                     sampling_rate=128)
                 preprocessing.gsr_noise_cancelation()
-                preprocessing.baseline_normalization(baseline_duration=baseline_duration)
+                #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()   
-                preprocessed_data = \
-                    preprocessed_data[start_trim*128:-end_trim*128]
+                #preprocessed_data = \
+                #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(gsr_output_path, gsr_file)
                 np.savetxt(file_name, preprocessed_data)
 
@@ -161,13 +162,13 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                     PpgPreprocessing(ppg_data[:, 0],
                                      sampling_rate=128)
                 preprocessing.filtering()
-                preprocessing.baseline_normalization(baseline_duration=baseline_duration)
+                #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()   
-                preprocessed_data = \
-                    preprocessed_data[start_trim*128:-end_trim*128]
+                #preprocessed_data = \
+                #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(ppg_output_path, ppg_file)
                 np.savetxt(file_name, preprocessed_data)
 
 
-preprocessing_exp1_1()
-#preprocessing_exp1_0()
+#preprocessing_exp1_1()
+preprocessing_exp1_0()

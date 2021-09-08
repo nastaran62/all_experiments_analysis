@@ -1,7 +1,5 @@
 import numpy as np
-from sklearn.utils import shuffle
-from classification import feature_selection_random_forest, svm_classification, random_forest
-from sklearn.metrics import precision_recall_fscore_support, classification_report, accuracy_score
+from classification import multimodal_classification, voting_fusion
 
 def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
                                          participants,
@@ -48,39 +46,33 @@ def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
         ppg_train = ppg_train[permutation, :]
         train_labels = train_labels[permutation]
          
-        print("eeg eeg eeg")
-        accuracy, fscore, eeg_preds = \
-            random_forest(eeg_train, eeg_test, train_labels, test_labels)
-        all_eeg_accuracy.append(accuracy)
-        all_eeg_fscore.append(fscore)
-        print("gsr gsr gsr")
-        accuracy, fscore, gsr_preds = \
-            feature_selection_random_forest(gsr_train, gsr_test, train_labels, test_labels)
-        all_gsr_accuracy.append(accuracy)
-        all_gsr_fscore.append(fscore)
+        eeg_parameters = eeg_train, eeg_test, "random_forest", "eeg_model.pickle"
+        gsr_parameters = gsr_train, gsr_test, "feature_selection_random_forest", "gsr_model.pickle"
+        ppg_parameters = ppg_train, ppg_test, "random_forest", "ppg_model.pickle"
         
-        print("ppg ppg ppg")
-        accuracy, fscore, ppg_preds = \
-            random_forest(ppg_train, ppg_test, train_labels, test_labels)
-        all_ppg_accuracy.append(accuracy)
-        all_ppg_fscore.append(fscore)
-        i = 0
-        preds_fusion = []
-        for i in range(len(eeg_preds)):
-            if eeg_preds[i] + ppg_preds[i] + gsr_preds[i] > 1 :
-                preds_fusion.append(1)
-            else:
-                preds_fusion.append(0)
-    
-        acc = accuracy_score(preds_fusion, test_labels)
-        print(classification_report(test_labels, preds_fusion))
-        precision, recall, f_score, support = \
-            precision_recall_fscore_support(test_labels,
-                                            preds_fusion,
-                                            average='weighted')
+        eeg_result, gsr_result, ppg_result = \
+            multimodal_classification(train_labels,
+                                      test_labels,
+                                      eeg=eeg_parameters,
+                                      gsr=gsr_parameters,
+                                      ppg=ppg_parameters)
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
 
-        all_fusion_accuracy.append(acc)
-        all_fusion_fscore.append(f_score)
+        all_eeg_accuracy.append(eeg_accuracy)
+        all_eeg_fscore.append(eeg_fscore)
+        
+        all_gsr_accuracy.append(gsr_accuracy)
+        all_gsr_fscore.append(gsr_fscore)
+        
+        all_ppg_accuracy.append(ppg_accuracy)
+        all_ppg_fscore.append(ppg_fscore)
+
+        fusion_accuracy, fusion_fscore = \
+            voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
+        all_fusion_accuracy.append(fusion_accuracy)
+        all_fusion_fscore.append(fusion_fscore)
         start = end
 
     eeg_accuracy = np.mean(np.array(all_eeg_accuracy))
@@ -91,6 +83,103 @@ def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
     ppg_fscore = np.mean(np.array(all_ppg_fscore))
     fusion_accuracy = np.mean(np.array(all_fusion_accuracy))
     fusion_fscore = np.mean(np.array(all_fusion_fscore))
+
+    print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
+    print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
+    print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
+    print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
+
+def subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
+                                         participants,
+                                         make_train_test_set,
+                                         fold=4):
+    fold = fold
+    start = 0
+    end = start
+    all_eeg_accuracy = []
+    all_gsr_accuracy = []
+    all_ppg_accuracy = []
+    all_fusion_accuracy = []
+    all_eeg_fscore = []
+    all_gsr_fscore = []
+    all_ppg_fscore = []
+    all_fusion_fscore = []
+    while start < len(participants):
+        end = end + fold
+        if end > len(participants):
+            end = len(participants)
+        test_participants = participants[start:end]
+        train_participants = []
+        for item in participants:
+            if item not in test_participants:
+                train_participants.append(item)
+        
+        print(test_participants, "*******************")
+        eeg_train, eeg_test = \
+            make_train_test_set(all_eeg, train_participants, test_participants)
+
+        gsr_train, gsr_test = \
+            make_train_test_set(all_gsr, train_participants, test_participants)
+
+        ppg_train, ppg_test = \
+            make_train_test_set(all_ppg, train_participants, test_participants)
+        
+        train_labels, test_labels = \
+            make_train_test_set(all_labels, train_participants, test_participants, label=True)
+        
+        print(eeg_train.shape, eeg_test.shape)
+        print(gsr_train.shape, gsr_test.shape)
+        print(ppg_train.shape, ppg_test.shape)
+        print(train_labels.shape, test_labels.shape)
+            
+        # Shuffling
+        permutation = np.random.permutation(train_labels.shape[0])
+        eeg_train = eeg_train[permutation, :]
+        gsr_train = gsr_train[permutation, :]
+        ppg_train = ppg_train[permutation, :]
+        train_labels = train_labels[permutation]
+        
+        eeg_parameters = eeg_train, eeg_test, "lstm", "eeg_lstm.h5"
+        gsr_parameters = gsr_train, gsr_test, "lstm", "gsr_lstm.h5"
+        ppg_parameters = ppg_train, ppg_test, "lstm", "ppg_lstm.h5"
+        
+        eeg_result, gsr_result, ppg_result = \
+            multimodal_classification(train_labels,
+                                      test_labels,
+                                      eeg=eeg_parameters,
+                                      gsr=gsr_parameters,
+                                      ppg=ppg_parameters)
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
+
+        all_eeg_accuracy.append(eeg_accuracy)
+        all_eeg_fscore.append(eeg_fscore) 
+        
+        all_gsr_accuracy.append(gsr_accuracy)
+        all_gsr_fscore.append(gsr_fscore)
+        
+        all_ppg_accuracy.append(ppg_accuracy)
+        all_ppg_fscore.append(ppg_fscore)
+ 
+        fusion_accuracy, fusion_fscore = \
+            voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
+        all_fusion_accuracy.append(fusion_accuracy)
+        all_fusion_fscore.append(fusion_fscore)
+        start = end
+
+    print(all_eeg_accuracy)
+    print(all_gsr_accuracy)
+    print(all_ppg_accuracy)
+    eeg_accuracy = np.mean(np.array(all_eeg_accuracy))
+    eeg_fscore = np.mean(np.array(all_eeg_fscore))
+    gsr_accuracy = np.mean(np.array(all_gsr_accuracy))
+    gsr_fscore = np.mean(np.array(all_gsr_fscore))
+    ppg_accuracy = np.mean(np.array(all_ppg_accuracy))
+    ppg_fscore = np.mean(np.array(all_ppg_fscore))
+    fusion_accuracy = np.mean(np.array(all_fusion_accuracy))
+    fusion_fscore = np.mean(np.array(all_fusion_fscore))
+
 
     print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
     print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
