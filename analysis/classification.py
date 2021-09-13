@@ -128,8 +128,6 @@ class ModalityClassification(multiprocessing.Process):
         std = np.std(self.train_x)
         self.train_x = (self.train_x - mean) / std
         self.test_x = (self.test_x - mean) / std
-        if not os.path.exists("models"):
-            os.mkdir("models")
         class_weights = \
             class_weight.compute_class_weight('balanced',
                                               np.unique(self.train_y),
@@ -337,6 +335,63 @@ def multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
 
     return eeg, gsr, ppg
 
+
+def mixed_multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
+    classifiers = []
+    eeg_train, eeg_test, eeg_classification_method, eeg_model_name = eeg   
+    eeg_queue = multiprocessing.Queue()
+    eeg_classifier = \
+        ModalityClassification(eeg_train,
+                                eeg_test,
+                                train_labels,
+                                test_labels,
+                                eeg_queue,
+                                type=eeg_classification_method,
+                                model_name=eeg_model_name)
+    classifiers.append(eeg_classifier)
+     
+    gsr_train, gsr_test, gsr_classification_method, gsr_model_name = gsr     
+    gsr_queue = multiprocessing.Queue()
+    gsr_classifier = \
+        ModalityClassification(gsr_train,
+                                gsr_test,
+                                train_labels,
+                                test_labels,
+                                gsr_queue,
+                                type=gsr_classification_method,
+                                model_name=gsr_model_name)
+    classifiers.append(gsr_classifier)
+    
+
+    ppg_train, ppg_test, ppg_classification_method, ppg_model_name = ppg       
+    ppg_queue = multiprocessing.Queue()
+    ppg_classifier = \
+        ModalityClassification(ppg_train,
+                                ppg_test,
+                                train_labels,
+                                test_labels,
+                                ppg_queue,
+                                type=ppg_classification_method,
+                                model_name=ppg_model_name)
+    classifiers.append(ppg_classifier)
+
+        
+    for classifier in classifiers:
+        classifier.start()
+
+    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
+    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
+    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
+
+    for classifier in classifiers:
+        classifier.join()
+
+    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities
+    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities
+    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities
+
+    return eeg, gsr, ppg
+
 def voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
     preds_fusion = []
     for i in range(len(eeg_preds)):
@@ -357,3 +412,24 @@ def equal_fusion():
 
 def weighted_fusion():
     pass
+
+
+def random_forest(train_x, test_x, train_y, test_y):
+    train_mean = np.mean(train_x)
+    train_std = np.std(train_x)
+    train_x = (train_x - train_mean) / train_std
+    test_x = (test_x - train_mean) / train_std
+
+    clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
+    clf.fit(train_x, train_y)
+    pred_values = clf.predict(test_x)
+    accuracy = accuracy_score(pred_values, test_y)
+    #print(classification_report(test_y, pred_values))
+    precision, recall, f_score, support = \
+        precision_recall_fscore_support(test_y,
+                                        pred_values,
+                                        average='weighted',
+                                        zero_division=0)
+    print("accuracy:", accuracy, "f_score:", f_score, "\n")
+    #predictions = clf.predict_proba(test_x)
+    return accuracy, f_score

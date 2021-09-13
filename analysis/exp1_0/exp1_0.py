@@ -5,26 +5,27 @@ from cross_subject_manual import kfold_evaluation
 from subject_independent import subject_independent_cross_validation
 from exp1_0.feature_extraction import partitioning_and_getting_features
 
-PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23]
+PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23]
 #PARTICIPANTS = [9, 11, 12, 14, 15, 16, 17, 18, 19 ,20 ,21, 22, 23]
 
-def prepare_data(label_type="arousal", window_size=0):
-    ''' 
-    input_path = "../experimental_data/exp1_0/preprocessed_data"
-    label_path = "../experimental_data/exp1_0/prepared_labels"
-    all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_dominances = \
-        partitioning_and_getting_features(input_path, label_path, window_size=window_size)
-    
-    pickle.dump(all_eeg, open("exp1_0/data/eeg.pickle", "wb"))
-    pickle.dump(all_gsr, open("exp1_0/data/gsr.pickle", "wb"))
-    pickle.dump(all_ppg, open("exp1_0/data/ppg.pickle", "wb"))
-    pickle.dump((all_emotions, all_arousals, all_valences, all_dominances), open("exp1_0/data/labels.pickle", "wb"))
-    '''
-    all_eeg = pickle.load(open("exp1_0/data/eeg.pickle", "rb"))
-    all_gsr = pickle.load(open("exp1_0/data/gsr.pickle", "rb"))
-    all_ppg = pickle.load(open("exp1_0/data/ppg.pickle", "rb"))
-    (all_emotions, all_arousals, all_valences, all_dominances) = \
-        pickle.load(open("exp1_0/data/labels.pickle", "rb"))
+def prepare_data(label_type="arousal", window_size=0, calculate=False):
+    if calculate is True: 
+        input_path = "../experimental_data/exp1_0/preprocessed_data"
+        label_path = "../experimental_data/exp1_0/prepared_labels"
+        all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_dominances = \
+            partitioning_and_getting_features(input_path, label_path, window_size=window_size)
+        
+        pickle.dump(all_eeg, open("exp1_0/data/eeg.pickle", "wb"))
+        pickle.dump(all_gsr, open("exp1_0/data/gsr.pickle", "wb"))
+        pickle.dump(all_ppg, open("exp1_0/data/ppg.pickle", "wb"))
+        pickle.dump((all_emotions, all_arousals, all_valences, all_dominances), open("exp1_0/data/labels.pickle", "wb"))
+    else:
+        all_eeg = pickle.load(open("exp1_0/data/eeg.pickle", "rb"))
+        all_gsr = pickle.load(open("exp1_0/data/gsr.pickle", "rb"))
+        all_ppg = pickle.load(open("exp1_0/data/ppg.pickle", "rb"))
+        (all_emotions, all_arousals, all_valences, all_dominances) = \
+            pickle.load(open("exp1_0/data/labels.pickle", "rb"))
+
     if label_type == "arousal":
         labels = all_arousals
     elif label_type == "valence":
@@ -38,7 +39,7 @@ def prepare_data(label_type="arousal", window_size=0):
 
 def cross_subject(label_type="arousal", window_size=0):
     all_eeg, all_gsr, all_ppg, all_labels = \
-        prepare_data(label_type=label_type, window_size=window_size)
+        prepare_data(label_type=label_type, window_size=window_size, calculate=True)
     print(np.array(all_eeg).shape, np.array(all_gsr).shape, np.array(all_ppg).shape)
     print(all_eeg.shape)
     eeg = all_eeg.reshape(-1, *all_eeg.shape[-1:])
@@ -49,10 +50,14 @@ def cross_subject(label_type="arousal", window_size=0):
     print(ppg.shape, "********************************")
 
     labels =all_labels.reshape(-1)
+    CLASSES = [0, 1]
+    for i in range(len(CLASSES)):
+        print("class count", CLASSES[i], (np.array(labels) == CLASSES[i]).sum())
     print(labels.shape, "********************************")
+
     eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
         eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
-            kfold_evaluation(eeg, gsr, ppg, labels, k=5)
+            kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="exp1_0/models")
     print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
     print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
     print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
@@ -75,7 +80,7 @@ def subject_dependent(label_type="arousal", window_size=0):
     subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
-                                 fold=4)
+                                 fold=4, model_path="exp1_0/models")
 
 def subject_independent(label_type="arousal", window_size=0):
     def make_train_test_set(data, train_participants, test_participants):
@@ -97,7 +102,7 @@ def subject_independent(label_type="arousal", window_size=0):
     subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
                                          PARTICIPANTS,
                                          make_train_test_set,
-                                         fold=3)
+                                         fold=3, model_path="exp1_0/models")
 
 
 

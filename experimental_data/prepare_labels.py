@@ -60,6 +60,7 @@ def prepare_exp1_0_labels(label_path, output_path):
                 dominance = int(row[6])
                 print(row[1])
                 emotion = stimuli[row[1]]
+                '''
                 if valence >= 5:
                     valence = 1
                 else:
@@ -74,7 +75,7 @@ def prepare_exp1_0_labels(label_path, output_path):
                     dominance = 1
                 else:
                     dominance = 0
-
+                '''
                 row = [int(row[0]), emotion, int(row[2]), valence, arousal, dominance]
                 csv_writer.writerow(row)
 

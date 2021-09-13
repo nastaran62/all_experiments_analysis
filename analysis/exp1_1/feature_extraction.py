@@ -51,7 +51,7 @@ def partitioning_and_getting_features(input_path, label_path, trial_size=60, win
                                   128,
                                   trial_size,
                                   labels,
-                                  feature_extraction=get_gsr_features,
+                                  feature_extraction=None,#get_gsr_features,
                                   window_size=window_size)
         
         all_ppg_trials, all_emotions, all_arousal, all_valence = \
@@ -59,7 +59,7 @@ def partitioning_and_getting_features(input_path, label_path, trial_size=60, win
                                   128,
                                   trial_size,
                                   labels,
-                                  feature_extraction=get_ppg_features,
+                                  feature_extraction=None, #get_ppg_features,
                                   window_size=window_size)
         
 
@@ -125,7 +125,8 @@ def three_part_partitioning_and_windowing(trials_path,
                                           labels,
                                           window_size=0,
                                           eeg=False,
-                                          feature_extraction=None):
+                                          feature_extraction=None,
+                                          baseline_length=5):
     print(trials_path)
     trials = os.listdir(trials_path)
     trials.sort()
@@ -138,10 +139,22 @@ def three_part_partitioning_and_windowing(trials_path,
     for trial in trials:
         data = np.loadtxt(os.path.join(trials_path, trial))
         if eeg is True:
+            samples = int(data.shape[1]/sampling_rate)*sampling_rate
+            data = data[:, -samples:]
+            print(data.shape, "*************************")
+            data = \
+                eeg_baseline_normalization(data[:, sampling_rate*baseline_length:],
+                                            data[:, 0:sampling_rate*baseline_length])
             samples = data.shape[1]
         else:
-            #display_signal(data)
+            samples = int(data.shape[0]/sampling_rate)*sampling_rate
+            data = data[-samples:]
+            print(data.shape, "*************************")
+            data = \
+                ppg_gsr_baseline_normalization(data[sampling_rate*baseline_length:],
+                                                data[0:sampling_rate*baseline_length])
             samples = data.shape[0]
+
         part_count = int(samples / (trial_length*sampling_rate))
         remaining = samples - (trial_length*sampling_rate) * part_count
         part_length = trial_length*sampling_rate
@@ -212,7 +225,8 @@ def three_part_partitioning_and_windowing(trials_path,
         all_valence.append(trial_valences)
     return all_trials, all_emotions, all_arousal, all_valence
 
-def windowing(data, arousal, valence, emotion, window_size, sampling_rate, eeg=False, feature_extraction=None):
+def windowing(data, arousal, valence, emotion, window_size, sampling_rate,
+              eeg=False, feature_extraction=None):    
     if window_size == 0:
         if feature_extraction is None:
             return [data], [arousal], [valence], [emotion]
@@ -254,7 +268,29 @@ def windowing(data, arousal, valence, emotion, window_size, sampling_rate, eeg=F
         return all_parts, all_arousal, all_valence, all_emotion
             
             
+def eeg_baseline_normalization(data, baseline, sampling_rate=128):
+    length = int(baseline.shape[1] / sampling_rate)
+    all = []
+    for i in range(length):
+        all.append(baseline[:, i*sampling_rate:(i+1)*sampling_rate])
+    baseline = np.mean(np.array(all), axis=0)
 
+    window_count = round(data.shape[1] / sampling_rate)
+    for i in range(window_count):
+        data[:, i*sampling_rate:(i+1)*sampling_rate] -= baseline
+    return data 
+
+def ppg_gsr_baseline_normalization(data, baseline, sampling_rate=128):
+    length = int(baseline.shape[0] / sampling_rate)
+    all = []
+    for i in range(length):
+        all.append(baseline[i*sampling_rate:(i+1)*sampling_rate])
+    baseline = np.mean(np.array(all), axis=0)
+
+    window_count = round(data.shape[0] / sampling_rate)
+    for i in range(window_count):
+        data[i*sampling_rate:(i+1)*sampling_rate] -= baseline
+    return data 
             
 
 

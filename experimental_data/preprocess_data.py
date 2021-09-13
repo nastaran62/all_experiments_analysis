@@ -169,6 +169,54 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                 file_name = os.path.join(ppg_output_path, ppg_file)
                 np.savetxt(file_name, preprocessed_data)
 
+def make_like_deap_exp1_0(input_path, label_path, output_path):
+    all_participants = os.listdir(input_path)
+    all_participants.sort()
 
+    for participant in all_participants:
+        labels = pd.read_csv("{0}/{1}.csv".format(label_path, participant))
+        trials_path = os.path.join(input_path, participant)
+
+        eeg_trials = []
+        eeg_trials_path = os.path.join(trials_path, "eeg")
+        trials = os.listdir(eeg_trials_path)
+        trials.sort()
+        for trial in trials:
+            eeg_trials.append(np.loadtxt(os.path.join(eeg_trials_path, trial)))
+
+        gsr_trials = []
+        gsr_trials_path = os.path.join(trials_path, "gsr")
+        trials = os.listdir(gsr_trials_path)
+        trials.sort()
+        for trial in trials:
+            gsr_trials.append(np.loadtxt(os.path.join(gsr_trials_path, trial)))
+
+        ppg_trials = []
+        ppg_trials_path = os.path.join(trials_path, "ppg")
+        trials = os.listdir(ppg_trials_path)
+        trials.sort()
+        for trial in trials:
+            ppg_trials.append(np.loadtxt(os.path.join(ppg_trials_path, trial)))
+        
+        trials_no, channels_no, samples_no = np.array(eeg_trials).shape
+        all = np.zeros((trials_no, channels_no+2, samples_no))
+        gsr_trials = np.array(gsr_trials)
+        gsr_trials = gsr_trials.reshape((gsr_trials.shape[0], 1, gsr_trials.shape[1]))
+
+        ppg_trials = np.array(ppg_trials)
+        ppg_trials = ppg_trials.reshape((ppg_trials.shape[0], 1, ppg_trials.shape[1]))
+        all[:, 0:16, :] = np.array(eeg_trials)
+        all[:, 16:17, :] = gsr_trials
+        all[:, 17:18, :] = ppg_trials
+
+        all_labels = np.zeros((trials_no, 4))
+        all_labels[:, 0] = labels["valence"]
+        all_labels[:, 1] = labels["arousal"]
+        all_labels[:, 2] = labels["dominance"]
+        all_labels[:, 3] = labels["emotion"]
+        print(all.shape, all_labels.shape)
+        pickle.dump({'data':all, 'labels':all_labels},
+                    open("{0}/{1}.pickle".format(output_path, participant), "wb"))
 #preprocessing_exp1_1()
-preprocessing_exp1_0()
+#preprocessing_exp1_0()
+make_like_deap_exp1_0("exp1_0/preprocessed_data", "exp1_0/prepared_labels", "exp1_0/pickled")

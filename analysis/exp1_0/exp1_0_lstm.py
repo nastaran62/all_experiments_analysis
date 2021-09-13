@@ -9,7 +9,7 @@ PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
 #PARTICIPANTS = [9, 11, 12, 14, 15, 16, 17, 18, 19 ,20 ,21, 22, 23]
 
 def prepare_data(label_type="arousal", window_size=0):
-    '''
+    #'''
     input_path = "../experimental_data/exp1_0/preprocessed_data"
     label_path = "../experimental_data/exp1_0/prepared_labels"
     all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_dominances = \
@@ -19,7 +19,7 @@ def prepare_data(label_type="arousal", window_size=0):
     pickle.dump(all_gsr, open("exp1_0/data/gsr.pickle", "wb"))
     pickle.dump(all_ppg, open("exp1_0/data/ppg.pickle", "wb"))
     pickle.dump((all_emotions, all_arousals, all_valences, all_dominances), open("exp1_0/data/labels.pickle", "wb"))
-    '''
+    #'''
     all_eeg = pickle.load(open("exp1_0/data/eeg.pickle", "rb"))
     all_gsr = pickle.load(open("exp1_0/data/gsr.pickle", "rb"))
     all_ppg = pickle.load(open("exp1_0/data/ppg.pickle", "rb"))

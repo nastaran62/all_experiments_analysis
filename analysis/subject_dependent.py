@@ -4,7 +4,8 @@ from cross_subject_manual import kfold_evaluation, lstm_kfold_evaluation
 def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  participants,
                                  prepare_data,
-                                 fold=3):
+                                 fold=3,
+                                 model_path="."):
     eeg_accuracy_all = []
     eeg_fscore_all = []
 
@@ -25,7 +26,7 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             labels = prepare_data(all_labels[i], label=True)
             eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
                 eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
-                    kfold_evaluation(eeg, gsr, ppg, labels, k=fold)
+                    kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
             print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
             print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
@@ -54,7 +55,8 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
 def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  participants,
                                  prepare_data,
-                                 fold=3):
+                                 fold=3,
+                                 model_path="."):
     eeg_accuracy_all = []
     eeg_fscore_all = []
 
@@ -76,7 +78,7 @@ def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             print(eeg.shape, gsr.shape, ppg.shape, labels.shape)
             eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
                 eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
-                    lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=fold)
+                    lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
             print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
             print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)

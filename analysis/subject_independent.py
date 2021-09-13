@@ -1,10 +1,15 @@
 import numpy as np
+import os
+import pathlib
 from classification import multimodal_classification, voting_fusion
 
 def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
                                          participants,
                                          make_train_test_set,
-                                         fold=4):
+                                         fold=4,
+                                         model_path="."):
+    if not os.path.exists(model_path):
+        pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
     fold = fold
     start = 0
     end = start
@@ -46,9 +51,12 @@ def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
         ppg_train = ppg_train[permutation, :]
         train_labels = train_labels[permutation]
          
-        eeg_parameters = eeg_train, eeg_test, "random_forest", "eeg_model.pickle"
-        gsr_parameters = gsr_train, gsr_test, "feature_selection_random_forest", "gsr_model.pickle"
-        ppg_parameters = ppg_train, ppg_test, "random_forest", "ppg_model.pickle"
+        eeg_parameters = \
+            eeg_train, eeg_test, "random_forest", os.path.join(model_path, "eeg_model.pickle")
+        gsr_parameters = \
+            gsr_train, gsr_test, "random_forest", os.path.join(model_path, "gsr_model.pickle")
+        ppg_parameters = \
+            ppg_train, ppg_test, "random_forest", os.path.join(model_path, "ppg_model.pickle")
         
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
@@ -92,7 +100,10 @@ def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
 def subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
                                          participants,
                                          make_train_test_set,
-                                         fold=4):
+                                         fold=4,
+                                         model_path="."):
+    if not os.path.exists(model_path):
+        pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
     fold = fold
     start = 0
     end = start
@@ -139,9 +150,12 @@ def subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_lab
         ppg_train = ppg_train[permutation, :]
         train_labels = train_labels[permutation]
         
-        eeg_parameters = eeg_train, eeg_test, "lstm", "eeg_lstm.h5"
-        gsr_parameters = gsr_train, gsr_test, "lstm", "gsr_lstm.h5"
-        ppg_parameters = ppg_train, ppg_test, "lstm", "ppg_lstm.h5"
+        eeg_parameters = \
+            eeg_train, eeg_test, "lstm", os.path.join(model_path, "eeg_lstm.h5")
+        gsr_parameters = \
+            gsr_train, gsr_test, "lstm", os.path.join(model_path, "gsr_lstm.h5")
+        ppg_parameters = \
+            ppg_train, ppg_test, "lstm", os.path.join(model_path, "ppg_lstm.h5")
         
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
