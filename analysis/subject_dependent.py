@@ -18,6 +18,7 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
 
     fusion_accuracy_all = []
     fusion_fscore_all = []
+    print(len(all_labels), "^^^^^^^^^^^^^^^^")
     for i in range(len(all_labels)):
         if i in participants:
             print(i, "**************************************")

@@ -6,7 +6,7 @@ from cross_subject_manual import kfold_evaluation, shuffled_kfold_evaluation
 from subject_independent import subject_independent_cross_validation
 from exp1_0.feature_extraction import partitioning_and_getting_features
 
-PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23]
+PARTICIPANTS = [0]#, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23]
 #PARTICIPANTS = [9, 11, 12, 14, 15, 16, 17, 18, 19 ,20 ,21, 22, 23]
 
 def prepare_data(label_type="arousal", window_size=0, calculate=False):
@@ -100,16 +100,14 @@ def subject_dependent(label_type="arousal", window_size=0):
             return data
         
     all_eeg, all_gsr, all_ppg, all_labels = \
-        prepare_data(label_type=label_type, window_size=window_size)
+        prepare_data(label_type=label_type, window_size=window_size, calculate=False)
 
-    #subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
-    #                             PARTICIPANTS,
-    #                             prepare_data_for_subject_dependent,
-    #                             fold=4, model_path="exp1_0/models")
+    print(len(all_eeg), len(all_labels))
+    input("wait")
     subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
-                                 fold=5,
+                                 fold=2,
                                  model_path="exp1_0/models",
                                  shuffle=False)
 

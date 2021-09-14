@@ -1,8 +1,9 @@
 import numpy as np
 import os
 import pathlib
-from sklearn.model_selection import KFold
-from classification import multimodal_classification, voting_fusion
+from sklearn.model_selection import StratifiedKFold
+from sklearn.utils import shuffle
+from classification import multimodal_classification, voting_fusion, equal_fusion
 from sklearn.model_selection import train_test_split
 #from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
@@ -22,7 +23,7 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg = ppg[permutation, :]
     labels = labels[permutation]
     
-    kf = KFold(n_splits=k, shuffle=True, random_state=100)
+    kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=100)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
     all_ppg_accuracy = []
@@ -31,7 +32,7 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     all_gsr_fscore = []
     all_ppg_fscore = []
     all_fusion_fscore = []
-    for train_index, test_index in kf.split(labels):
+    for train_index, test_index in kf.split(labels, y=labels):
         eeg_train, eeg_test = eeg[train_index, :], eeg[test_index, :]
         gsr_train, gsr_test = gsr[train_index, :], gsr[test_index, :]
         ppg_train, ppg_test = ppg[train_index, :], ppg[test_index, :]
@@ -226,32 +227,27 @@ def mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
            eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore
 
 
-def kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
+def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path="."):
     '''
     It is for using lstm or traditional classifiers for different modalities and fusng the result
     '''
     if not os.path.exists(model_path):
         pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
-    # Shuffling
-    permutation = np.random.permutation(labels.shape[0])
     # Shape is (participant*trials), windows, features
 
-    eeg = eeg[permutation, :, :]
-    gsr = gsr[permutation, :, :]
-    ppg = ppg[permutation, :, :]
-    labels = labels[permutation, :]
-    print(labels.shape, eeg.shape)
-    kf = KFold(n_splits=k, shuffle=True, random_state=100)
+    kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=100)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
     all_ppg_accuracy = []
     all_fusion_accuracy = []
+    all_efusion_accuracy = []
     all_eeg_fscore = []
     all_gsr_fscore = []
     all_ppg_fscore = []
     all_fusion_fscore = []
+    all_efusion_fscore = []
 
-    for train_index, test_index in kf.split(labels[:, 0]):
+    for train_index, test_index in kf.split(labels[:, 0], y=labels[:, 0]):
         eeg_train, eeg_test = eeg[train_index, :, :], eeg[test_index, :, :]
         gsr_train, gsr_test = gsr[train_index, :, :], gsr[test_index, :, :]
         ppg_train, ppg_test = ppg[train_index, :, :], ppg[test_index, :, :]
@@ -295,6 +291,13 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
         all_fusion_fscore.append(fusion_fscore)
+    
+
+        efusion_accuracy, efusion_fscore = \
+            equal_fusion(eeg_probabilities, gsr_probabilities,
+                          ppg_probabilities, test_labels)
+        all_efusion_accuracy.append(fusion_accuracy)
+        all_efusion_fscore.append(efusion_fscore)
 
     print(all_eeg_accuracy)
     print(all_gsr_accuracy)
@@ -307,6 +310,8 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg_fscore = np.mean(np.array(all_ppg_fscore))
     fusion_accuracy = np.mean(np.array(all_fusion_accuracy))
     fusion_fscore = np.mean(np.array(all_fusion_fscore))
+    efusion_accuracy = np.mean(np.array(all_efusion_accuracy))
+    efusion_fscore = np.mean(np.array(all_efusion_fscore))
 
-    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore
+    return eeg_accuracy, gsr_accuracy, ppg_accuracy, efusion_accuracy, \
+           eeg_fscore, gsr_fscore, ppg_fscore, efusion_fscore

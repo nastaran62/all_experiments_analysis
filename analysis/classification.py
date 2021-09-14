@@ -63,6 +63,7 @@ class ModalityClassification(multiprocessing.Process):
         train_std = np.std(self.train_x)
         self.train_x = (self.train_x - train_mean) / train_std
         self.test_x = (self.test_x - train_mean) / train_std
+        self.train_x, self.train_y = shuffle(self.train_x, self.train_y)
         clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
         clf.fit(self.train_x, self.train_y)
         pickle.dump(clf, open(self._model_name, "wb"))
@@ -451,10 +452,22 @@ def voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
         precision_recall_fscore_support(test_labels,
                                         preds_fusion,
                                         average='weighted')
+    print(accuracy)
     return accuracy, fscore
 
-def equal_fusion():
-    pass
+def equal_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
+    all = eeg_preds + gsr_preds + ppg_preds
+    all = all / 3
+    print(all.shape)
+    preds_fusion = np.argmax(all, axis=1)
+    accuracy = accuracy_score(preds_fusion, test_labels)
+    print(classification_report(test_labels, preds_fusion))
+    precision, recall, fscore, support = \
+        precision_recall_fscore_support(test_labels,
+                                        preds_fusion,
+                                        average='weighted')
+    print(accuracy)
+    return accuracy, fscore
 
 def weighted_fusion():
     pass

@@ -37,6 +37,7 @@ def partitioning_and_getting_features(input_path, label_path, window_size=0):
     all_participants_valences = []
     all_participants_dominances = []
     for participant in all_participants:
+        print(participant)
         labels = pd.read_csv("{0}/{1}.csv".format(label_path, participant))
         trials_path = os.path.join(input_path, participant)
         all_eeg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
