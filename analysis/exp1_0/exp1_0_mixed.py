@@ -1,7 +1,7 @@
 from subject_dependent import subject_dependent_evaluation, subject_dependent_lstm_evaluation
 import numpy as np
 import pickle
-from cross_subject_manual import kfold_evaluation, lstm_kfold_evaluation
+from cross_subject_manual import mixed_kfold_evaluation
 from subject_independent import subject_independent_cross_validation, subject_independent_lstm_cross_validation
 from exp1_0.feature_extraction import partitioning_and_getting_features
 
@@ -60,7 +60,7 @@ def cross_subject(label_type="arousal", window_size=0):
     print(labels.shape, "********************************")
     eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
         eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
-            lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5)
+            mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5)
     print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
     print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
     print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)

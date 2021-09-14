@@ -1,3 +1,4 @@
+from sklearn.utils import shuffle
 from subject_dependent import subject_dependent_evaluation
 import numpy as np
 import pickle
@@ -73,8 +74,10 @@ def subject_dependent(label_type="arousal", window_size=0):
         all_parts = []
         for trial in data:
             for part in trial:
+                all_windows = []
                 for window in part:
-                    all_parts.append(window)
+                    all_windows.append(window)
+                all_parts.append(all_windows)
         return np.array(all_parts)
     
     all_eeg, all_gsr, all_ppg, all_labels = \
@@ -83,7 +86,8 @@ def subject_dependent(label_type="arousal", window_size=0):
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
                                  fold=4,
-                                 model_path="exp1_1/models")
+                                 model_path="exp1_1/models",
+                                 shuffle=True)
 
 def subject_independent(label_type="arousal", window_size=0):
     def make_train_test_set(data, train_participants, test_participants, label=False):

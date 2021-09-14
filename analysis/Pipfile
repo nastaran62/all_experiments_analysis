@@ -3,6 +3,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
 [packages]
 tensorflow = "==2.4.2"
 numpy = "*"
@@ -11,13 +16,9 @@ scikit-learn = "*"
 pywavelets = "*"
 heartpy = "*"
 seaborn = "*"
+neurokit2 = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
-
-[[source]]
-url = "https://pypi.org/simple"
-verify_ssl = true
-name = "pypi"

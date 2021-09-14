@@ -1,7 +1,8 @@
+from sklearn.utils import shuffle
 from subject_dependent import subject_dependent_evaluation
 import numpy as np
 import pickle
-from cross_subject_manual import kfold_evaluation 
+from cross_subject_manual import kfold_evaluation, shuffled_kfold_evaluation 
 from subject_independent import subject_independent_cross_validation
 from exp1_0.feature_extraction import partitioning_and_getting_features
 
@@ -10,6 +11,7 @@ PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
 
 def prepare_data(label_type="arousal", window_size=0, calculate=False):
     if calculate is True: 
+        print("here")
         input_path = "../experimental_data/exp1_0/preprocessed_data"
         label_path = "../experimental_data/exp1_0/prepared_labels"
         all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_dominances = \
@@ -37,9 +39,9 @@ def prepare_data(label_type="arousal", window_size=0, calculate=False):
 
     return all_eeg, all_gsr, all_ppg, labels
 
-def cross_subject(label_type="arousal", window_size=0):
+def cross_subject_old(label_type="arousal", window_size=0):
     all_eeg, all_gsr, all_ppg, all_labels = \
-        prepare_data(label_type=label_type, window_size=window_size, calculate=True)
+        prepare_data(label_type=label_type, window_size=window_size, calculate=False)
     print(np.array(all_eeg).shape, np.array(all_gsr).shape, np.array(all_ppg).shape)
     print(all_eeg.shape)
     eeg = all_eeg.reshape(-1, *all_eeg.shape[-1:])
@@ -63,24 +65,53 @@ def cross_subject(label_type="arousal", window_size=0):
     print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
     print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
 
+def cross_subject(label_type="arousal", window_size=0):
+    all_eeg, all_gsr, all_ppg, all_labels = \
+        prepare_data(label_type=label_type, window_size=window_size, calculate=False)
+    print(np.array(all_eeg).shape, np.array(all_gsr).shape, np.array(all_ppg).shape)
+    print(all_eeg.shape)
+    eeg = all_eeg.reshape(-1, *all_eeg.shape[-2:])
+    print(eeg.shape, "********************************")
+    gsr = all_gsr.reshape(-1, *all_gsr.shape[-2:])
+    print(gsr.shape, "********************************")
+    ppg = all_ppg.reshape(-1, *all_ppg.shape[-2:])
+    print(ppg.shape, "********************************")
+
+    labels =all_labels.reshape(-1, *all_labels.shape[-1:])
+    print(labels.shape, "********************************")
+    eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
+        eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+            shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="exp1_0/models")
+    print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
+    print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
+    print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
+    print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
+
 def subject_dependent(label_type="arousal", window_size=0):
     def prepare_data_for_subject_dependent(data, label=False):
         if label is True:
-            data = data.reshape(-1)
+            data = data.reshape(-1, data.shape[-1])
             print(data.shape)
             return data
         else:
             print(data.shape, "*************************")
-            data = data.reshape(-1, data.shape[-1])
+            data = data.reshape(-1, *data.shape[-2:])
             print(data.shape)
             return data
         
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
+
+    #subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
+    #                             PARTICIPANTS,
+    #                             prepare_data_for_subject_dependent,
+    #                             fold=4, model_path="exp1_0/models")
     subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
-                                 fold=4, model_path="exp1_0/models")
+                                 fold=5,
+                                 model_path="exp1_0/models",
+                                 shuffle=False)
 
 def subject_independent(label_type="arousal", window_size=0):
     def make_train_test_set(data, train_participants, test_participants):

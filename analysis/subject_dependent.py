@@ -1,11 +1,12 @@
 import numpy as np
-from cross_subject_manual import kfold_evaluation, lstm_kfold_evaluation
+from cross_subject_manual import shuffled_kfold_evaluation, lstm_kfold_evaluation, kfold_evaluation
 
 def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  participants,
                                  prepare_data,
-                                 fold=3,
-                                 model_path="."):
+                                 fold=5,
+                                 model_path=".",
+                                 shuffle=True):
     eeg_accuracy_all = []
     eeg_fscore_all = []
 
@@ -24,9 +25,15 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             gsr = prepare_data(all_gsr[i])
             ppg = prepare_data(all_ppg[i])
             labels = prepare_data(all_labels[i], label=True)
-            eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-                eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
-                    kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
+            print(eeg.shape, gsr.shape, ppg.shape, labels.shape, "****************")
+            if shuffle is True:
+                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
+                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+                        shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
+            else:
+                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
+                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+                        kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
             print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
             print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
@@ -51,6 +58,7 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
     print("ppg fscore: ", np.mean(np.array(ppg_fscore_all)))
     print("fusion accuracy: ", np.mean(np.array(fusion_accuracy_all)))
     print("fusion fscore: ", np.mean(np.array(fusion_fscore_all)))
+
 
 def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
                                  participants,

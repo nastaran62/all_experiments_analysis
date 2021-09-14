@@ -4,10 +4,12 @@ import numpy as np
 sys.path.append('../')
 import pandas as pd
 import matplotlib.pyplot as plt
+import neurokit2 as nk
 
 from processing.feature_extraction.eeg import EegFeatures
 from processing.feature_extraction.gsr import GsrFeatureExtraction
 from processing.feature_extraction.ppg import get_ppg_components
+
 
 emotions = {"Anger":[0, "4", "2"],
              "Fear":[1, "4", "2"],
@@ -57,7 +59,7 @@ def partitioning_and_getting_features(input_path, label_path, window_size=0):
             getting_features(os.path.join(trials_path, "ppg"),
                                   128,
                                   labels,
-                                  feature_extraction=None, #get_ppg_features,
+                                  feature_extraction=get_ppg_features,
                                   window_size=window_size)
         print(np.array(all_eeg_trials).shape)
         print(np.array(all_gsr_trials).shape)
@@ -111,8 +113,21 @@ def get_ppg_features(data, sampling_rate):
         print(rr)
         print("********************************************")
     '''
-    
-    return [np.mean(data), np.std(data)]#, mean_hr, mean_hrv, mean_rr]
+    hrv_time = nk.hrv_time(data, sampling_rate=sampling_rate, show=True)
+
+    HRV_MadNN = hrv_time['HRV_MadNN'].values.tolist()
+
+    HRV_MCVNN = hrv_time['HRV_MCVNN'].values.tolist()
+
+    HRV_IQRNN = hrv_time['HRV_IQRNN'].values.tolist()
+
+    HRV_MeanNN = [np.mean(data)]
+
+    HRV_SDNN = [np.std(data)]
+
+    temp = HRV_IQRNN + HRV_MadNN + HRV_MCVNN + HRV_MeanNN + HRV_SDNN
+
+    return np.array(temp)
 
 def display_signal(signal):
     plt.plot(signal)

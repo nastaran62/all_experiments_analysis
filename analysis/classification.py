@@ -42,6 +42,9 @@ class ModalityClassification(multiprocessing.Process):
         if self._classification_type == "random_forest":
             predictions = \
                 self._random_forest()
+        if self._classification_type == "mixed_random_forest":
+            predictions = \
+                self._mixed_random_forest()
         elif self._classification_type == "feature_selection_random_forest":
             predictions = \
                 self._feature_selection_random_forest()
@@ -60,7 +63,6 @@ class ModalityClassification(multiprocessing.Process):
         train_std = np.std(self.train_x)
         self.train_x = (self.train_x - train_mean) / train_std
         self.test_x = (self.test_x - train_mean) / train_std
-
         clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
         clf.fit(self.train_x, self.train_y)
         pickle.dump(clf, open(self._model_name, "wb"))
@@ -73,6 +75,50 @@ class ModalityClassification(multiprocessing.Process):
                                             average='weighted')
         predictions = clf.predict_proba(self.test_x)
         return acc, f_score, pred_values, predictions
+    
+    def _mixed_random_forest(self):
+        train_mean = np.mean(self.train_x)
+        train_std = np.std(self.train_x)
+        self.train_x = (self.train_x - train_mean) / train_std
+        self.test_x = (self.test_x - train_mean) / train_std
+
+        samples, windows, features = self.train_x.shape
+        labels = []
+        for i in range(samples):
+            for j in range(windows):
+                labels.append(self.train_y[i])
+        
+        print("************************", self.train_x.shape, self.train_y.shape)
+        self.train_y = np.array(labels)
+        self.train_x = self.train_x.reshape(-1, self.train_x.shape[-1])
+        print("************************", self.train_x.shape, self.train_y.shape)
+
+        self.train_x, self.train_y = shuffle(self.train_x, self.train_y)
+        clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
+        clf.fit(self.train_x, self.train_y)
+        pickle.dump(clf, open(self._model_name, "wb"))
+
+        samples, windows, features = self.test_x.shape
+        pred_values = []
+        all_predictions = []
+
+        for i in range(samples):
+            predictions = clf.predict_proba(self.test_x[i, :, :])
+            prediction = np.mean(np.array(predictions), axis=0)
+            all_predictions.append(prediction)
+            pred_values.append(np.argmax(prediction))
+
+        pred_values = np.array(pred_values)
+        acc = accuracy_score(pred_values, self.test_y)
+        #print(classification_report(self.test_y, pred_values))
+        precision, recall, f_score, support = \
+            precision_recall_fscore_support(self.test_y,
+                                            pred_values,
+                                            average='weighted')
+        print("acc, f_score, precision, recall", acc, f_score, precision, recall)
+        predictions = np.array(all_predictions)
+        return acc, f_score, pred_values, predictions
+
 
     def _svm(self):
         train_mean = np.mean(self.train_x)
