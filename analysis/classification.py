@@ -64,12 +64,14 @@ class ModalityClassification(multiprocessing.Process):
         self.train_x = (self.train_x - train_mean) / train_std
         self.test_x = (self.test_x - train_mean) / train_std
         self.train_x, self.train_y = shuffle(self.train_x, self.train_y)
+        #clf = clf = svm.SVC(C=150, gamma="auto", probability=True)
         clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
         clf.fit(self.train_x, self.train_y)
         pickle.dump(clf, open(self._model_name, "wb"))
         pred_values = clf.predict(self.test_x)
         acc = accuracy_score(pred_values, self.test_y)
-        print(classification_report(self.test_y, pred_values))
+        print(acc)
+        #print(classification_report(self.test_y, pred_values))
         precision, recall, f_score, support = \
             precision_recall_fscore_support(self.test_y,
                                             pred_values,
@@ -177,7 +179,7 @@ class ModalityClassification(multiprocessing.Process):
         self.test_x = (self.test_x - mean) / std
         class_weights = \
             class_weight.compute_class_weight('balanced',
-                                              np.unique(self.train_y),
+                                              [0, 1],
                                               self.train_y)
         class_weights = dict(enumerate(class_weights))
         self.train_y = to_categorical(self.train_y)
@@ -192,7 +194,7 @@ class ModalityClassification(multiprocessing.Process):
                             mode='auto',
                             period=1)
         early_stopping = \
-            EarlyStopping(monitor='val_loss',
+            EarlyStopping(monitor='val_accuracy',
                           patience=50,
                           verbose=1,
                           mode='auto')
@@ -213,7 +215,7 @@ class ModalityClassification(multiprocessing.Process):
         history = \
             model.fit(np.array(self.train_x),
                       np.array(self.train_y),
-                      batch_size=128,
+                      batch_size=32,
                       epochs=1000,
                       class_weight=class_weights,
                       validation_data=(np.array(self.test_x),

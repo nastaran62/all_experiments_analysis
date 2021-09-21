@@ -18,7 +18,9 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
 
     fusion_accuracy_all = []
     fusion_fscore_all = []
-    print(len(all_labels), "^^^^^^^^^^^^^^^^")
+    
+    efusion_accuracy_all = []
+    efusion_fscore_all = []
     for i in range(len(all_labels)):
         if i in participants:
             print(i, "**************************************")
@@ -28,17 +30,18 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             labels = prepare_data(all_labels[i], label=True)
             print(eeg.shape, gsr.shape, ppg.shape, labels.shape, "****************")
             if shuffle is True:
-                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore = \
                         shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             else:
-                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+                eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+                    eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore = \
                         kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
             print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
             print("ppg_accuracy: ", ppg_accuracy, "ppg_fscore: ", ppg_fscore)
             print("fusion_accuracy: ", fusion_accuracy, "fusion_fscore: ", fusion_fscore)
+            print("efusion_accuracy: ", efusion_accuracy, "efusion_fscore: ", efusion_fscore)
             eeg_accuracy_all.append(eeg_accuracy)
             eeg_fscore_all.append(eeg_fscore)
 
@@ -51,6 +54,9 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             fusion_accuracy_all.append(fusion_accuracy)
             fusion_fscore_all.append(fusion_fscore)
 
+            efusion_accuracy_all.append(efusion_accuracy)
+            efusion_fscore_all.append(efusion_fscore)
+
     print("eeg accuracy: ", np.mean(np.array(eeg_accuracy_all)))
     print("eeg fscore: ", np.mean(np.array(eeg_fscore_all)))
     print("gsr accuracy: ", np.mean(np.array(gsr_accuracy_all)))
@@ -59,6 +65,8 @@ def subject_dependent_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
     print("ppg fscore: ", np.mean(np.array(ppg_fscore_all)))
     print("fusion accuracy: ", np.mean(np.array(fusion_accuracy_all)))
     print("fusion fscore: ", np.mean(np.array(fusion_fscore_all)))
+    print("equal fusion accuracy: ", np.mean(np.array(efusion_accuracy_all)))
+    print("equal fusion fscore: ", np.mean(np.array(efusion_fscore_all)))
 
 
 def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
@@ -77,6 +85,9 @@ def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
 
     fusion_accuracy_all = []
     fusion_fscore_all = []
+
+    efusion_accuracy_all = []
+    efusion_fscore_all = []
     for i in range(len(all_labels)):
         if i in participants:
             print(i, "**************************************")
@@ -85,8 +96,8 @@ def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             ppg = prepare_data(all_ppg[i])
             labels = prepare_data(all_labels[i], label=True)
             print(eeg.shape, gsr.shape, ppg.shape, labels.shape)
-            eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-                eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore = \
+            eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+                eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore = \
                     lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=fold, model_path=model_path)
             print("eeg_accuracy: ", eeg_accuracy, "eeg_fscore: ", eeg_fscore)
             print("gsr_accuracy: ", gsr_accuracy, "gsr_fscore: ", gsr_fscore)
@@ -104,6 +115,9 @@ def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
             fusion_accuracy_all.append(fusion_accuracy)
             fusion_fscore_all.append(fusion_fscore)
 
+            efusion_accuracy_all.append(efusion_accuracy)
+            efusion_fscore_all.append(efusion_fscore)
+
     print("eeg accuracy: ", np.mean(np.array(eeg_accuracy_all)))
     print("eeg fscore: ", np.mean(np.array(eeg_fscore_all)))
     print("gsr accuracy: ", np.mean(np.array(gsr_accuracy_all)))
@@ -112,3 +126,5 @@ def subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
     print("ppg fscore: ", np.mean(np.array(ppg_fscore_all)))
     print("fusion accuracy: ", np.mean(np.array(fusion_accuracy_all)))
     print("fusion fscore: ", np.mean(np.array(fusion_fscore_all)))
+    print("equal fusion accuracy: ", np.mean(np.array(efusion_accuracy_all)))
+    print("equal fusion fscore: ", np.mean(np.array(efusion_fscore_all)))

@@ -11,8 +11,8 @@ PARTICIPANT = 1
 WINDOW_SIZE = 1
 LABEL_TYPE = "arousal"
 
-# 39 for exp1-0 should be removed (bad gsr, ppg data)
-# 7 and 18 for exp-1 should be removed (eeg has more samples)
+# 19(39) for exp1-0 should be removed (bad gsr, ppg data)
+# 7(27) and 18(38) for exp-1 should be removed (eeg has more samples)
 exp1_0_all_eeg, exp1_0_all_gsr, exp1_0_all_ppg , exp1_0_all_labels = \
     exp1_0_prepare_data(calculate=True,
                         window_size=WINDOW_SIZE,

@@ -4,6 +4,7 @@ import numpy as np
 sys.path.append('../')
 import pandas as pd
 import matplotlib.pyplot as plt
+import neurokit2 as nk
 
 from processing.feature_extraction.eeg import EegFeatures
 from processing.feature_extraction.gsr import GsrFeatureExtraction
@@ -51,7 +52,7 @@ def partitioning_and_getting_features(input_path, label_path, trial_size=60, win
                                   128,
                                   trial_size,
                                   labels,
-                                  feature_extraction=None,#get_gsr_features,
+                                  feature_extraction=get_gsr_features,
                                   window_size=window_size)
         
         all_ppg_trials, all_emotions, all_arousal, all_valence = \
@@ -59,7 +60,7 @@ def partitioning_and_getting_features(input_path, label_path, trial_size=60, win
                                   128,
                                   trial_size,
                                   labels,
-                                  feature_extraction=None, #get_ppg_features,
+                                  feature_extraction=get_ppg_features,
                                   window_size=window_size)
         
 
@@ -96,22 +97,23 @@ def get_gsr_features(data, sampling_rate):
            gsr_feature_extraction.variance() + gsr_feature_extraction.standard_deviation()
 
 def get_ppg_features(data, sampling_rate):
-    '''hr, hrv, rr = get_ppg_components(data, sampling_rate)
-    try:
-        mean_hr = np.mean(hr)
-        mean_hrv = np.mean(hrv)
-        mean_rr = np.mean(rr)
-    except:
-        mean_hr = 0
-        mean_hrv = 0
-        mean_rr = 0
-        print(hr)
-        print(hrv)
-        print(rr)
-        print("********************************************")
-    '''
+    #hr, hrv, rr = get_ppg_components(data, sampling_rate)
+    hrv_time = nk.hrv_time(data, sampling_rate=sampling_rate, show=True)
+
+    hrv_madnn = hrv_time['HRV_MadNN'].values.tolist()
+
+    hrv_mcvnn = hrv_time['HRV_MCVNN'].values.tolist()
+
+    hrv_iqrnn = hrv_time['HRV_IQRNN'].values.tolist()
     
-    return [np.mean(data), np.std(data)]#, mean_hr, mean_hrv, mean_rr]
+
+    ppg_mean = [np.mean(data)]
+
+    ppg_std = [np.std(data)]
+
+    temp = ppg_mean + ppg_std + hrv_madnn + hrv_mcvnn + hrv_iqrnn 
+
+    return np.array(temp)
 
 def display_signal(signal):
     plt.plot(signal)

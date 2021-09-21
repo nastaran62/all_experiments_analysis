@@ -28,10 +28,12 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     all_gsr_accuracy = []
     all_ppg_accuracy = []
     all_fusion_accuracy = []
+    all_efusion_accuracy = []
     all_eeg_fscore = []
     all_gsr_fscore = []
     all_ppg_fscore = []
     all_fusion_fscore = []
+    all_efusion_fscore = []
     for train_index, test_index in kf.split(labels, y=labels):
         eeg_train, eeg_test = eeg[train_index, :], eeg[test_index, :]
         gsr_train, gsr_test = gsr[train_index, :], gsr[test_index, :]
@@ -65,8 +67,17 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
-        all_fusion_fscore.append(fusion_fscore)
+        all_fusion_fscore.append(fusion_fscore)        
+        
+        efusion_accuracy, efusion_fscore = \
+            equal_fusion(eeg_probabilities, gsr_probabilities,
+                          ppg_probabilities, test_labels)
+        all_efusion_accuracy.append(fusion_accuracy)
+        all_efusion_fscore.append(efusion_fscore)
 
+    print(all_eeg_accuracy)
+    print(all_gsr_accuracy)
+    print(all_ppg_accuracy)
     eeg_accuracy = np.mean(np.array(all_eeg_accuracy))
     eeg_fscore = np.mean(np.array(all_eeg_fscore))
     gsr_accuracy = np.mean(np.array(all_gsr_accuracy))
@@ -75,9 +86,11 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg_fscore = np.mean(np.array(all_ppg_fscore))
     fusion_accuracy = np.mean(np.array(all_fusion_accuracy))
     fusion_fscore = np.mean(np.array(all_fusion_fscore))
+    efusion_accuracy = np.mean(np.array(all_efusion_accuracy))
+    efusion_fscore = np.mean(np.array(all_efusion_fscore))
 
-    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore
+    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore
 
 
 def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
@@ -90,16 +103,19 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg = ppg[permutation, :, :]
     labels = labels[permutation]
     
-    kf = KFold(n_splits=k, shuffle=True, random_state=100)
+    kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
     all_ppg_accuracy = []
     all_fusion_accuracy = []
+    all_efusion_accuracy = []
     all_eeg_fscore = []
     all_gsr_fscore = []
     all_ppg_fscore = []
     all_fusion_fscore = []
-    for train_index, test_index in kf.split(labels):
+    all_fusion_fscore = []
+    all_efusion_fscore = []
+    for train_index, test_index in kf.split(labels, y=labels):
         eeg_train, eeg_test = eeg[train_index, :, :], eeg[test_index, :, :]
         gsr_train, gsr_test = gsr[train_index, :, :], gsr[test_index, :, :]
         ppg_train, ppg_test = ppg[train_index, :, :], ppg[test_index, :, :]
@@ -134,6 +150,12 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         all_fusion_accuracy.append(fusion_accuracy)
         all_fusion_fscore.append(fusion_fscore)
 
+        efusion_accuracy, efusion_fscore = \
+            equal_fusion(eeg_probabilities, gsr_probabilities,
+                          ppg_probabilities, test_labels)
+        all_efusion_accuracy.append(fusion_accuracy)
+        all_efusion_fscore.append(efusion_fscore)
+
     print(all_eeg_accuracy)
     print(all_gsr_accuracy)
     print(all_ppg_accuracy)
@@ -145,9 +167,11 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg_fscore = np.mean(np.array(all_ppg_fscore))
     fusion_accuracy = np.mean(np.array(all_fusion_accuracy))
     fusion_fscore = np.mean(np.array(all_fusion_fscore))
+    efusion_accuracy = np.mean(np.array(all_efusion_accuracy))
+    efusion_fscore = np.mean(np.array(all_efusion_fscore))
 
-    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, \
-           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore
+    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore
 
 
 def mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
@@ -262,6 +286,7 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path="."):
         train_labels = train_labels.reshape(-1)
         test_labels = test_labels.reshape(-1)
         print(eeg_train.shape, train_labels.shape)
+        input("wait")
 
         eeg_parameters = eeg_train, eeg_test, "random_forest", os.path.join(model_path, "eeg_rf.pickle")
         gsr_parameters = gsr_train, gsr_test, "random_forest", os.path.join(model_path, "gsr_rf.pickle")
@@ -313,5 +338,5 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path="."):
     efusion_accuracy = np.mean(np.array(all_efusion_accuracy))
     efusion_fscore = np.mean(np.array(all_efusion_fscore))
 
-    return eeg_accuracy, gsr_accuracy, ppg_accuracy, efusion_accuracy, \
-           eeg_fscore, gsr_fscore, ppg_fscore, efusion_fscore
+    return eeg_accuracy, gsr_accuracy, ppg_accuracy, fusion_accuracy, efusion_accuracy, \
+           eeg_fscore, gsr_fscore, ppg_fscore, fusion_fscore, efusion_fscore

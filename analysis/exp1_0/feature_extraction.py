@@ -1,6 +1,8 @@
 import os
+import pathlib
 import sys
 import numpy as np
+import pickle
 sys.path.append('../')
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,7 +19,7 @@ emotions = {"Anger":[0, "4", "2"],
              "Neutral":[3, "3", "3"],
              "Sadness":[4, "2", "2"]}
 
-def partitioning_and_getting_features(input_path, label_path, window_size=0):
+def partitioning_and_getting_features(input_path, label_path, feature_path, window_size=0, calculate=True):
     '''
     Reads all files, partition them based on trial size and save features for
     all partitions of all trials of all participants
@@ -37,34 +39,45 @@ def partitioning_and_getting_features(input_path, label_path, window_size=0):
     all_participants_valences = []
     all_participants_dominances = []
     for participant in all_participants:
-        print(participant)
-        labels = pd.read_csv("{0}/{1}.csv".format(label_path, participant))
-        trials_path = os.path.join(input_path, participant)
-        all_eeg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
-            getting_features(os.path.join(trials_path, "eeg"),
-                                  128,
-                                  labels,
-                                  feature_extraction=get_eeg_features,
-                                  eeg=True,
-                                  window_size=window_size)
-        
- 
-        all_gsr_trials, all_emotions, all_arousal, all_valence, all_dominance = \
-            getting_features(os.path.join(trials_path, "gsr"),
-                                  128,
-                                  labels,
-                                  feature_extraction=get_gsr_features,
-                                  window_size=window_size)
-        
-        all_ppg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
-            getting_features(os.path.join(trials_path, "ppg"),
-                                  128,
-                                  labels,
-                                  feature_extraction=get_ppg_features,
-                                  window_size=window_size)
-        print(np.array(all_eeg_trials).shape)
-        print(np.array(all_gsr_trials).shape)
-        print(np.array(all_ppg_trials).shape)
+        if calculate is True:
+            print(participant)
+            labels = pd.read_csv("{0}/{1}.csv".format(label_path, participant))
+            trials_path = os.path.join(input_path, participant)
+            all_eeg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
+                getting_features(os.path.join(trials_path, "eeg"),
+                                    128,
+                                    labels,
+                                    feature_extraction=get_eeg_features,
+                                    eeg=True,
+                                    window_size=window_size)
+            
+    
+            all_gsr_trials, all_emotions, all_arousal, all_valence, all_dominance = \
+                getting_features(os.path.join(trials_path, "gsr"),
+                                    128,
+                                    labels,
+                                    feature_extraction=get_gsr_features,
+                                    window_size=window_size)
+            
+            all_ppg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
+                getting_features(os.path.join(trials_path, "ppg"),
+                                    128,
+                                    labels,
+                                    feature_extraction=get_ppg_features,
+                                    window_size=window_size)
+            print(np.array(all_eeg_trials).shape)
+            print(np.array(all_gsr_trials).shape)
+            print(np.array(all_ppg_trials).shape)
+            if not os.path.exists(feature_path):
+                pathlib.Path(feature_path).mkdir(parents=True, exist_ok=True)
+            pickle.dump((all_eeg_trials, all_gsr_trials, all_ppg_trials,
+                         all_emotions, all_arousal, all_valence, all_dominance),
+                         open("{0}/{1}.pickle".format(feature_path, participant), "wb"))
+        else:
+            (all_eeg_trials, all_gsr_trials, all_ppg_trials,
+            all_emotions, all_arousal, all_valence, all_dominance) = \
+                pickle.load(open("{0}/{1}.pickle".format(feature_path, participant), "rb"))
+
         # The output for labels are the same for all modalities
         # Since based on labels we have to apply some changes on data (remove when label is other)
         # I had to put calculating labels inside the modality processing method
@@ -114,19 +127,21 @@ def get_ppg_features(data, sampling_rate):
         print(rr)
         print("********************************************")
     '''
+    
     hrv_time = nk.hrv_time(data, sampling_rate=sampling_rate, show=True)
 
-    HRV_MadNN = hrv_time['HRV_MadNN'].values.tolist()
+    hrv_madnn = hrv_time['HRV_MadNN'].values.tolist()
 
-    HRV_MCVNN = hrv_time['HRV_MCVNN'].values.tolist()
+    hrv_mcvnn = hrv_time['HRV_MCVNN'].values.tolist()
 
-    HRV_IQRNN = hrv_time['HRV_IQRNN'].values.tolist()
+    hrv_iqrnn = hrv_time['HRV_IQRNN'].values.tolist()
+    
 
-    HRV_MeanNN = [np.mean(data)]
+    ppg_mean = [np.mean(data)]
 
-    HRV_SDNN = [np.std(data)]
+    ppg_std = [np.std(data)]
 
-    temp = HRV_IQRNN + HRV_MadNN + HRV_MCVNN + HRV_MeanNN + HRV_SDNN
+    temp = ppg_mean + ppg_std + hrv_madnn + hrv_mcvnn + hrv_iqrnn 
 
     return np.array(temp)
 
@@ -234,6 +249,7 @@ def windowing(data, arousal, valence, emotion, dominance,
         return all_parts, all_emotion, all_arousal, all_valence, all_dominance
 
 def eeg_baseline_normalization(data, baseline, sampling_rate=128):
+    #return data - np.mean(baseline)
     length = int(baseline.shape[1] / sampling_rate)
     all = []
     for i in range(length):
@@ -246,6 +262,7 @@ def eeg_baseline_normalization(data, baseline, sampling_rate=128):
     return data 
 
 def ppg_gsr_baseline_normalization(data, baseline, sampling_rate=128):
+    #return data - np.mean(baseline)
     length = int(baseline.shape[0] / sampling_rate)
     all = []
     for i in range(length):
@@ -256,6 +273,7 @@ def ppg_gsr_baseline_normalization(data, baseline, sampling_rate=128):
     for i in range(window_count):
         data[i*sampling_rate:(i+1)*sampling_rate] -= baseline
     return data 
+
 
     
         
