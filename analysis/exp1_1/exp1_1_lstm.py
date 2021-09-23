@@ -8,23 +8,14 @@ from exp1_1.feature_extraction import partitioning_and_getting_features
 PARTICIPANTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 #PARTICIPANTS = [9, 11, 12, 14, 15, 16, 17, 18, 19 ,20 ,21, 22, 23]
 
-def prepare_data(label_type="arousal", window_size=0):
-    '''
-    input_path = "../experimental_data/exp1_1/preprocessed_data"
+def prepare_data(label_type="arousal", window_size=0, calculate=False):
+
+    input_path = "../experimental_data/exp1_1/preprocessed_data_same_length"
     label_path = "../experimental_data/exp1_1/prepared_labels"
-    all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences = \
-        partitioning_and_getting_features(input_path, label_path, trial_size=60, window_size=window_size)
-    
-    pickle.dump(all_eeg, open("exp1_1/data/eeg.pickle", "wb"))
-    pickle.dump(all_gsr, open("exp1_1/data/gsr.pickle", "wb"))
-    pickle.dump(all_ppg, open("exp1_1/data/ppg.pickle", "wb"))
-    pickle.dump((all_emotions, all_arousals, all_valences), open("exp1_1/data/labels.pickle", "wb"))
-    '''
-    all_eeg = pickle.load(open("exp1_1/data/eeg.pickle", "rb"))
-    all_gsr = pickle.load(open("exp1_1/data/gsr.pickle", "rb"))
-    all_ppg = pickle.load(open("exp1_1/data/ppg.pickle", "rb"))
-    (all_emotions, all_arousals, all_valences) = \
-        pickle.load(open("exp1_1/data/labels.pickle", "rb"))
+    feature_path = "../experimental_data/exp1_1/features"
+    all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_intensity = \
+        partitioning_and_getting_features(input_path, label_path, feature_path, trial_size=60, window_size=window_size, calculate=calculate)
+
     if label_type == "arousal":
         labels = all_arousals
     elif label_type == "valence":
@@ -33,6 +24,7 @@ def prepare_data(label_type="arousal", window_size=0):
         labels = all_emotions
 
     return all_eeg, all_gsr, all_ppg, labels
+
 
 def cross_subject(label_type="arousal", window_size=0):
     def make_np_array(data, label=False):
@@ -78,15 +70,16 @@ def subject_dependent(label_type="arousal", window_size=0):
                 else:
                     all_parts.append(part)
         return np.array(all_parts)
-    
+
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size)
-    subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels, 
+    subject_dependent_lstm_evaluation(all_eeg, all_gsr, all_ppg, all_labels,
                                  PARTICIPANTS,
                                  prepare_data_for_subject_dependent,
                                  fold=4)
 
-def subject_independent(label_type="arousal", window_size=0):
+def subject_independent(label_type="arousal", window_size=0, calculate=False, fold=5):
+
     def make_train_test_set(data, train_participants, test_participants, label=False):
         test_trials = []
         train_trials = []
@@ -108,11 +101,8 @@ def subject_independent(label_type="arousal", window_size=0):
         return np.array(train_trials), np.array(test_trials)
 
     all_eeg, all_gsr, all_ppg, all_labels = \
-        prepare_data(label_type=label_type, window_size=window_size)
-    subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels, 
+        prepare_data(label_type=label_type, window_size=window_size, calculate=calculate)
+    subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
                                          PARTICIPANTS,
                                          make_train_test_set,
-                                         fold=3)
-
-
-
+                                         fold=fold)

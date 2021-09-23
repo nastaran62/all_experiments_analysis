@@ -27,7 +27,7 @@ def partitioning_and_getting_features(input_path, label_path, feature_path, wind
     measure labels based on self reports
     '''
     print("HEllllo")
- 
+
     all_participants = os.listdir(input_path)
     all_participants.sort()
 
@@ -50,15 +50,15 @@ def partitioning_and_getting_features(input_path, label_path, feature_path, wind
                                     feature_extraction=get_eeg_features,
                                     eeg=True,
                                     window_size=window_size)
-            
-    
+
+
             all_gsr_trials, all_emotions, all_arousal, all_valence, all_dominance = \
                 getting_features(os.path.join(trials_path, "gsr"),
                                     128,
                                     labels,
                                     feature_extraction=get_gsr_features,
                                     window_size=window_size)
-            
+
             all_ppg_trials, all_emotions, all_arousal, all_valence, all_dominance = \
                 getting_features(os.path.join(trials_path, "ppg"),
                                     128,
@@ -127,7 +127,7 @@ def get_ppg_features(data, sampling_rate):
         print(rr)
         print("********************************************")
     '''
-    
+
     hrv_time = nk.hrv_time(data, sampling_rate=sampling_rate, show=True)
 
     hrv_madnn = hrv_time['HRV_MadNN'].values.tolist()
@@ -135,13 +135,13 @@ def get_ppg_features(data, sampling_rate):
     hrv_mcvnn = hrv_time['HRV_MCVNN'].values.tolist()
 
     hrv_iqrnn = hrv_time['HRV_IQRNN'].values.tolist()
-    
+
 
     ppg_mean = [np.mean(data)]
 
     ppg_std = [np.std(data)]
 
-    temp = ppg_mean + ppg_std + hrv_madnn + hrv_mcvnn + hrv_iqrnn 
+    temp = ppg_mean + ppg_std + hrv_madnn + hrv_mcvnn + hrv_iqrnn
 
     return np.array(temp)
 
@@ -184,7 +184,7 @@ def getting_features(trials_path,
         arousal = labels.at[t, "arousal"]
         valence = labels.at[t, "valence"]
         dominance = labels.at[t, "dominance"]
-            
+
         all_windows, trial_emotions, trial_arousals, trial_valences, trial_dominance = \
             windowing(data, arousal, valence, emotion, dominance,
                       window_size, sampling_rate,
@@ -204,13 +204,13 @@ def windowing(data, arousal, valence, emotion, dominance,
               baseline_length=3):
     if eeg is True:
         data = \
-            eeg_baseline_normalization(data[:, 128*baseline_length:],
-                                       data[:, 0:128*baseline_length])
+            eeg_baseline_normalization(data[:, sampling_rate*baseline_length:],
+                                       data[:, 0:sampling_rate*baseline_length])
         samples = data.shape[1]
     else:
         data = \
-            ppg_gsr_baseline_normalization(data[128*baseline_length:],
-                                           data[0:128*baseline_length])
+            ppg_gsr_baseline_normalization(data[sampling_rate*baseline_length:],
+                                           data[0:sampling_rate*baseline_length])
         samples = data.shape[0]
     if window_size == 0:
         if feature_extraction is None:
@@ -259,7 +259,7 @@ def eeg_baseline_normalization(data, baseline, sampling_rate=128):
     window_count = round(data.shape[1] / sampling_rate)
     for i in range(window_count):
         data[:, i*sampling_rate:(i+1)*sampling_rate] -= baseline
-    return data 
+    return data
 
 def ppg_gsr_baseline_normalization(data, baseline, sampling_rate=128):
     #return data - np.mean(baseline)
@@ -272,13 +272,4 @@ def ppg_gsr_baseline_normalization(data, baseline, sampling_rate=128):
     window_count = round(data.shape[0] / sampling_rate)
     for i in range(window_count):
         data[i*sampling_rate:(i+1)*sampling_rate] -= baseline
-    return data 
-
-
-    
-        
-            
-
-            
-
-
+    return data

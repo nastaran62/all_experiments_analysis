@@ -7,7 +7,7 @@ from classification import multimodal_classification, voting_fusion, equal_fusio
 from sklearn.model_selection import train_test_split
 #from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-    
+
 def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     eeg = eeg.reshape(-1, *eeg.shape[-1:])
     gsr = gsr.reshape(-1, *gsr.shape[-1:])
@@ -22,7 +22,7 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     gsr = gsr[permutation, :]
     ppg = ppg[permutation, :]
     labels = labels[permutation]
-    
+
     kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=100)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
@@ -45,7 +45,7 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
             gsr_train, gsr_test, "random_forest", os.path.join(model_path, "gsr_model.pickle")
         ppg_parameters = \
             ppg_train, ppg_test, "random_forest", os.path.join(model_path, "ppg_model.pickle")
-        
+
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
                                       test_labels,
@@ -56,19 +56,19 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
         ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
         all_eeg_accuracy.append(eeg_accuracy)
-        all_eeg_fscore.append(eeg_fscore) 
-        
+        all_eeg_fscore.append(eeg_fscore)
+
         all_gsr_accuracy.append(gsr_accuracy)
         all_gsr_fscore.append(gsr_fscore)
 
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
- 
+
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
-        all_fusion_fscore.append(fusion_fscore)        
-        
+        all_fusion_fscore.append(fusion_fscore)
+
         efusion_accuracy, efusion_fscore = \
             equal_fusion(eeg_probabilities, gsr_probabilities,
                           ppg_probabilities, test_labels)
@@ -102,7 +102,7 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     gsr = gsr[permutation, :, :]
     ppg = ppg[permutation, :, :]
     labels = labels[permutation]
-    
+
     kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
@@ -120,11 +120,11 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         gsr_train, gsr_test = gsr[train_index, :, :], gsr[test_index, :, :]
         ppg_train, ppg_test = ppg[train_index, :, :], ppg[test_index, :, :]
         train_labels, test_labels = labels[train_index], labels[test_index]
-        
+
         eeg_parameters = eeg_train, eeg_test, "lstm", os.path.join(model_path, "eeg_lstm.h5")
         gsr_parameters = gsr_train, gsr_test, "lstm", os.path.join(model_path, "gsr_lstm.h5")
         ppg_parameters = ppg_train, ppg_test, "lstm", os.path.join(model_path, "ppg_lstm.h5")
-        
+
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
                                       test_labels,
@@ -136,15 +136,15 @@ def lstm_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
 
         all_eeg_accuracy.append(eeg_accuracy)
-        all_eeg_fscore.append(eeg_fscore) 
-        
+        all_eeg_fscore.append(eeg_fscore)
+
         all_gsr_accuracy.append(gsr_accuracy)
         all_gsr_fscore.append(gsr_fscore)
-        
+
 
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
- 
+
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
@@ -187,7 +187,7 @@ def mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
     ppg = ppg[permutation, :, :]
     labels = labels[permutation]
     print(eeg.shape)
-    
+
     kf = KFold(n_splits=k, shuffle=True, random_state=100)
     all_eeg_accuracy = []
     all_gsr_accuracy = []
@@ -202,14 +202,14 @@ def mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         gsr_train, gsr_test = gsr[train_index, :, :], gsr[test_index, :, :]
         ppg_train, ppg_test = ppg[train_index, :, :], ppg[test_index, :, :]
         train_labels, test_labels = labels[train_index], labels[test_index]
-        
+
         #eeg_parameters = eeg_train, eeg_test, "lstm", os.path.join(model_path, "eeg_lstm.h5")
         eeg_parameters = eeg_train, eeg_test, "mixed_random_forest", os.path.join(model_path, "eeg_rf.pickle")
         #gsr_parameters = gsr_train, gsr_test, "lstm", os.path.join(model_path, "gsr_lstm.h5")
         gsr_parameters = gsr_train, gsr_test, "mixed_random_forest", os.path.join(model_path, "gsr_rf.pickle")
         #ppg_parameters = ppg_train, ppg_test, "lstm", os.path.join(model_path, "ppg_lstm.h5")
         ppg_parameters = ppg_train, ppg_test, "mixed_random_forest", os.path.join(model_path, "ppg_rf.pickle")
-        
+
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
                                       test_labels,
@@ -221,15 +221,15 @@ def mixed_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path="."):
         ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
 
         all_eeg_accuracy.append(eeg_accuracy)
-        all_eeg_fscore.append(eeg_fscore) 
-        
+        all_eeg_fscore.append(eeg_fscore)
+
         all_gsr_accuracy.append(gsr_accuracy)
         all_gsr_fscore.append(gsr_fscore)
-        
+
 
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
- 
+
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
@@ -286,12 +286,11 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path="."):
         train_labels = train_labels.reshape(-1)
         test_labels = test_labels.reshape(-1)
         print(eeg_train.shape, train_labels.shape)
-        input("wait")
 
         eeg_parameters = eeg_train, eeg_test, "random_forest", os.path.join(model_path, "eeg_rf.pickle")
         gsr_parameters = gsr_train, gsr_test, "random_forest", os.path.join(model_path, "gsr_rf.pickle")
         ppg_parameters = ppg_train, ppg_test, "random_forest", os.path.join(model_path, "ppg_rf.pickle")
-        
+
         eeg_result, gsr_result, ppg_result = \
             multimodal_classification(train_labels,
                                       test_labels,
@@ -303,20 +302,20 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path="."):
         ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
 
         all_eeg_accuracy.append(eeg_accuracy)
-        all_eeg_fscore.append(eeg_fscore) 
-        
+        all_eeg_fscore.append(eeg_fscore)
+
         all_gsr_accuracy.append(gsr_accuracy)
         all_gsr_fscore.append(gsr_fscore)
-        
+
 
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
- 
+
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
         all_fusion_accuracy.append(fusion_accuracy)
         all_fusion_fscore.append(fusion_fscore)
-    
+
 
         efusion_accuracy, efusion_fscore = \
             equal_fusion(eeg_probabilities, gsr_probabilities,

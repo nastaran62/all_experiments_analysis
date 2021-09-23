@@ -1,15 +1,16 @@
 #  read data from raw_data path,
 #   resample them based on input sampling rate,
 #   split based on marker and save in prepared_data path
-#   (for each experiment we save raw_data in a folder in this path and then 
+#   (for each experiment we save raw_data in a folder in this path and then
 #    save prepared data and preprocessed data in the same path)
 
 import os
-import sys 
+import sys
 import pandas as pd
 import pickle
 import numpy as np
 sys.path.append('../')
+import pathlib
 
 
 from processing.preprocessing.eeg import EegPreprocessing
@@ -67,7 +68,7 @@ def preprocessing_exp1_1(eeg=True, gsr=True, ppg=True, face=False,
                                     sampling_rate=128)
                 preprocessing.gsr_noise_cancelation()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
-                preprocessed_data = preprocessing.get_data()   
+                preprocessed_data = preprocessing.get_data()
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(gsr_output_path, gsr_file)
@@ -87,7 +88,7 @@ def preprocessing_exp1_1(eeg=True, gsr=True, ppg=True, face=False,
                                      sampling_rate=128)
                 preprocessing.filtering()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
-                preprocessed_data = preprocessing.get_data()   
+                preprocessed_data = preprocessing.get_data()
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(ppg_output_path, ppg_file)
@@ -143,7 +144,7 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                                     sampling_rate=128)
                 preprocessing.gsr_noise_cancelation()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
-                preprocessed_data = preprocessing.get_data()   
+                preprocessed_data = preprocessing.get_data()
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(gsr_output_path, gsr_file)
@@ -163,7 +164,7 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                                      sampling_rate=128)
                 preprocessing.filtering()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
-                preprocessed_data = preprocessing.get_data()   
+                preprocessed_data = preprocessing.get_data()
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(ppg_output_path, ppg_file)
@@ -197,7 +198,7 @@ def make_like_deap_exp1_0(input_path, label_path, output_path):
         trials.sort()
         for trial in trials:
             ppg_trials.append(np.loadtxt(os.path.join(ppg_trials_path, trial)))
-        
+
         trials_no, channels_no, samples_no = np.array(eeg_trials).shape
         all = np.zeros((trials_no, channels_no+2, samples_no))
         gsr_trials = np.array(gsr_trials)
@@ -217,6 +218,81 @@ def make_like_deap_exp1_0(input_path, label_path, output_path):
         print(all.shape, all_labels.shape)
         pickle.dump({'data':all, 'labels':all_labels},
                     open("{0}/{1}.pickle".format(output_path, participant), "wb"))
+
+
+def exp1_1_same_length(sampling_rate=128):
+    input_path = "exp1_1/preprocessed_data"
+    output_path = "exp1_1/preprocessed_data_same_length"
+    all_participants = os.listdir(input_path)
+    all_participants.sort()
+    for participant in all_participants:
+        participant_output_path = os.path.join(output_path, participant)
+        participant_path = os.path.join(input_path, participant)
+        eeg_trials_path = os.path.join(participant_path, "eeg")
+        eeg_trials = os.listdir(eeg_trials_path)
+        eeg_trials.sort()
+
+        gsr_trials_path = os.path.join(participant_path, "gsr")
+        gsr_trials = os.listdir(gsr_trials_path)
+        gsr_trials.sort()
+
+        ppg_trials_path = os.path.join(participant_path, "ppg")
+        ppg_trials = os.listdir(ppg_trials_path)
+        ppg_trials.sort()
+
+        eeg_output_path = os.path.join(participant_output_path, "eeg")
+        if not os.path.exists(eeg_output_path):
+            pathlib.Path(eeg_output_path).mkdir(parents=True, exist_ok=True)
+
+        gsr_output_path = os.path.join(participant_output_path, "gsr")
+        if not os.path.exists(gsr_output_path):
+            pathlib.Path(gsr_output_path).mkdir(parents=True, exist_ok=True)
+
+        ppg_output_path = os.path.join(participant_output_path, "ppg")
+        if not os.path.exists(ppg_output_path):
+            pathlib.Path(ppg_output_path).mkdir(parents=True, exist_ok=True)
+
+        for i in range(len(eeg_trials)):
+            print(eeg_trials[i], gsr_trials[i], ppg_trials[i])
+            eeg_data = np.loadtxt(os.path.join(eeg_trials_path, eeg_trials[i]))
+            eeg_samples = eeg_data.shape[1]
+
+            gsr_data = np.loadtxt(os.path.join(gsr_trials_path, gsr_trials[i]))
+            gsr_samples = gsr_data.shape[0]
+
+            ppg_data = np.loadtxt(os.path.join(ppg_trials_path, ppg_trials[i]))
+            ppg_samples = ppg_data.shape[0]
+
+            print(eeg_data.shape, gsr_data.shape, ppg_data.shape)
+            if gsr_samples < eeg_samples:
+                while gsr_samples < eeg_samples:
+                    gsr_data = np.append(gsr_data, gsr_data[gsr_samples-1])
+                    gsr_samples = gsr_data.shape[0]
+            elif gsr_samples > eeg_samples:
+                gsr_data = gsr_data[0:eeg_samples]
+                gsr_samples = eeg_samples
+
+            if ppg_samples < eeg_samples:
+                while ppg_samples < eeg_samples:
+                    ppg_data = np.append(ppg_data, ppg_data[ppg_samples-1])
+                    ppg_samples = ppg_data.shape[0]
+            elif ppg_samples > eeg_samples:
+                ppg_data = ppg_data[0:eeg_samples]
+                ppg_samples = eeg_samples
+
+            samples = int(ppg_samples/128) * 128
+            eeg_data = eeg_data[:, 0:samples]
+            gsr_data = gsr_data[0:samples]
+            ppg_data = ppg_data[0:samples]
+            print(eeg_data.shape, gsr_data.shape, ppg_data.shape)
+            np.savetxt(os.path.join(eeg_output_path, eeg_trials[i]), eeg_data)
+            np.savetxt(os.path.join(gsr_output_path, gsr_trials[i]), gsr_data)
+            np.savetxt(os.path.join(ppg_output_path, ppg_trials[i]), ppg_data)
+
+
+
+
 #preprocessing_exp1_1()
 #preprocessing_exp1_0()
-make_like_deap_exp1_0("exp1_0/preprocessed_data", "exp1_0/prepared_labels", "exp1_0/pickled")
+#make_like_deap_exp1_0("exp1_0/preprocessed_data", "exp1_0/prepared_labels", "exp1_0/pickled")
+exp1_1_same_length()
