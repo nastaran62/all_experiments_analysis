@@ -66,8 +66,8 @@ class EegFeatures():
         bands = np.array([eeg_band_fft['Alpha'],
                         eeg_band_fft['Beta'],
                         eeg_band_fft['Theta'],
-                        eeg_band_fft['Delta']])
-        # eeg_band_fft['Gamma']])
+                        eeg_band_fft['Delta'],
+                        eeg_band_fft['Gamma']])
         return bands
 
 

@@ -201,7 +201,7 @@ def getting_features(trials_path,
 
 def windowing(data, arousal, valence, emotion, dominance,
               window_size, sampling_rate, eeg=False, feature_extraction=None,
-              baseline_length=3):
+              baseline_length=3, step=1):
     if eeg is True:
         data = \
             eeg_baseline_normalization(data[:, sampling_rate*baseline_length:],
@@ -218,16 +218,18 @@ def windowing(data, arousal, valence, emotion, dominance,
         else:
             return [feature_extraction(data, sampling_rate)], [emotion],[arousal], [valence], [emotion]
     else:
-        window_count = round(samples / (window_size * sampling_rate))
+        step = step * sampling_rate
         window_length = sampling_rate * window_size
-        start = 0
-        end = window_length
+        window_count = int((samples - window_length) / step) + 1
+
         all_parts = []
         all_arousal = []
         all_valence = []
         all_emotion = []
         all_dominance = []
         i = 0
+        start = 0
+        end = window_length
         while i < window_count:
             if eeg is True:
                 part = data[:, start:end]
@@ -241,8 +243,8 @@ def windowing(data, arousal, valence, emotion, dominance,
             all_valence.append(valence)
             all_emotion.append(emotion)
             all_dominance.append(dominance)
-            start = end
-            end = end + window_length
+            start = start + step
+            end = start + window_length
             if end > samples:
                 end = samples
             i += 1

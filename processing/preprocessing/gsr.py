@@ -1,12 +1,17 @@
 import numpy as np
 from scipy import signal
+import neurokit2 as nk
 
 class GsrPreprocessing():
     def __init__(self, data, sampling_rate=128):
         self._sampling_rate = sampling_rate
         self.data = data
-    
-    def gsr_noise_cancelation(self, low_pass=0.1, high_pass=15):
+
+    def gsr_noise_cancelation(self):
+        self.data = nk.eda_clean(self.data, sampling_rate=self._sampling_rate)
+
+
+    def gsr_noise_cancelation0(self, low_pass=0.1, high_pass=15):
         '''
         '''
         nyqs = self._sampling_rate * 0.5
@@ -27,5 +32,3 @@ class GsrPreprocessing():
 
     def get_data(self):
         return self.data
-
-

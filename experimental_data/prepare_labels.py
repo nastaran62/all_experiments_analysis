@@ -2,6 +2,12 @@ import csv
 import os
 from operator import itemgetter
 
+emotions = {"Anger":[0, "4", "2"],
+             "Fear":[1, "4", "2"],
+             "Happiness":[2, "4", "5"],
+             "Neutral":[3, "3", "3"],
+             "Sadness":[4, "2", "2"],
+             "other":[5, "3", "3"]}
 def prepare_exp1_1_labels(label_path, output_path):
     csv_file = open(label_path, 'r')
     csv_reader = csv.reader(csv_file)
@@ -18,7 +24,7 @@ def prepare_exp1_1_labels(label_path, output_path):
                                  "emotion-3", "intensity-3", "valence-3","arousal-3"])
             stimulus = 0
             stimuli = [1, 3, 4, 5, 6]
-            count = 12 
+            count = 12
             start = 2
             while stimulus < 5:
                 row = [stimuli[stimulus]] + \
@@ -47,7 +53,7 @@ def prepare_exp1_0_labels(label_path, output_path):
         stimuli = {'1': 0,
                    '3': 1,
                    '4': 2,
-                   '5': 3, 
+                   '5': 3,
                    '6': 4}
         with open("{0}/{1}.csv".format(output_path, participant), "w") as csv_file:
             csv_writer = csv.writer(csv_file)
@@ -79,9 +85,56 @@ def prepare_exp1_0_labels(label_path, output_path):
                 row = [int(row[0]), emotion, int(row[2]), valence, arousal, dominance]
                 csv_writer.writerow(row)
 
-prepare_exp1_0_labels("exp1_0/raw_data",
-                "exp1_0/prepared_labels")
+
+def prepare_high_intensity(label_path, output_path):
+    all_p = os.listdir(label_path)
+    all_p.sort()
+    with(open(output_path, "w")) as output_file:
+        csv_writer = csv.writer(output_file)
+        for file in all_p:
+            file_path = os.path.join(label_path, file)
+            with(open(file_path, "r")) as csv_file:
+                csv_reader = csv.reader(csv_file)
+                i = 0
+                for line in csv_reader:
+                    if i == 0:
+                        i += 1
+                        continue
+
+                    name = line[0]
+                    first_intensity = line[2]
+                    second_intensity = line[6]
+                    third_intensity = line[10]
+                    if second_intensity >= max(first_intensity, third_intensity):
+                        emotion = line[5]
+                        valence = line[7]
+                        arousal = line[8]
+                        intensity = second_intensity
+                    elif first_intensity > max(second_intensity, third_intensity):
+                        emotion = line[1]
+                        valence = line[3]
+                        arousal = line[4]
+                        intensity = first_intensity
+                    else:
+                        emotion = line[9]
+                        valence = line[11]
+                        arousal = line[12]
+                        intensity = third_intensity
+                    i += 1
+                    if valence == "":
+                        valence = emotions[emotion][2]
+                    if arousal == "":
+                        arousal = emotions[emotion][1]
+                    row = [file, name, emotion, intensity, arousal, valence]
+                    csv_writer.writerow(row)
+                    output_file.flush()
+
+prepare_high_intensity("exp1_1/prepared_labels", "all_labels.csv")
+
+
+#prepare_exp1_0_labels("exp1_0/raw_data",
+#                "exp1_0/prepared_labels")
+
 
 #prepare_exp1_1_labels("exp1_1/raw_labels/AfterConversation-V1.csv",
 #                  "exp1_1/prepared_labels")
-

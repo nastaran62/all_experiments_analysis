@@ -205,3 +205,11 @@ class GsrFeatureExtraction():
         Returns the minimum of the data
         '''
         return [min(self.data)]
+
+    def get_frequencies(self):
+        freq_data = np.abs(np.fft.fftshift(self.data))
+        features = (np.mean(freq_data) + np.median(freq_data) +
+                    np.std(freq_data) +
+                    np.max(freq_data) + np.min(freq_data) + (np.max(freq_data)-np.min(freq_data)))
+
+        return features

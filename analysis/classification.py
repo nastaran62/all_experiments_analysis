@@ -8,6 +8,7 @@ from sklearn import svm
 #from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.feature_selection import RFE
 from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
 #from sklearn.linear_model import LogisticRegression
 from sklearn.utils import class_weight
 from sklearn.utils import shuffle
@@ -95,7 +96,7 @@ class ModalityClassification(multiprocessing.Process):
         self.test_y = np.array(test_y)
 
         self._classification_type = type
-        self._classes = classes
+        self._classes = list(np.unique(self.train_y))
         self._model_name = model_name
 
     def run(self):
@@ -119,74 +120,80 @@ class ModalityClassification(multiprocessing.Process):
         print("done")
 
     def _lstm_classification(self):
-        mean = np.mean(self.train_x)
-        std = np.std(self.train_x)
-        self.train_x = (self.train_x - mean) / std
-        self.test_x = (self.test_x - mean) / std
-        class_weights = \
-            class_weight.compute_class_weight('balanced',
-                                              [0, 1],
-                                              self.train_y)
-        class_weights = dict(enumerate(class_weights))
-        self.train_y = to_categorical(self.train_y)
-        self.test_y = to_categorical(self.test_y)
-        print("Preparing classification")
-        checkpoint = \
-            ModelCheckpoint(self._model_name,
-                            monitor='val_accuracy',
-                            verbose=1,
-                            save_weights_only=False,
-                            mode='max',
-                            period=1)
-        checkpoint = Checkpoint((np.array(self.test_x),
-                                 np.array(self.test_y)),
-                                self._model_name)
-        early_stopping = \
-            EarlyStopping(monitor='val_accuracy',
-                          patience=50,
-                          verbose=1,
-                          mode='max')
-        reduceLR = ReduceLROnPlateau(monitor='val_accuracy',
-                                     factor=0.5,
-                                     patience=10,
-                                     min_lr=0.0001)
-        print("creating model")
-        model = simple_lstm((self.train_x.shape[1], self.train_x.shape[2]),
-                            80,  # lstm layers
-                            len(self._classes),  # number of classes
-                            dropout=0.5)
-        print("model.summary")
-        model.summary()
+        try:
+            mean = np.mean(self.train_x)
+            std = np.std(self.train_x)
+            self.train_x = (self.train_x - mean) / std
+            self.test_x = (self.test_x - mean) / std
+            class_weights = \
+                class_weight.compute_class_weight('balanced',
+                                                  self._classes,
+                                                  self.train_y)
+            class_weights = dict(enumerate(class_weights))
+            self.train_y = to_categorical(self.train_y)
+            self.test_y = to_categorical(self.test_y)
+            print("Preparing classification")
+            checkpoint = \
+                ModelCheckpoint(self._model_name,
+                                monitor='val_accuracy',
+                                verbose=1,
+                                save_weights_only=False,
+                                mode='max',
+                                period=1)
+            checkpoint = Checkpoint((np.array(self.test_x),
+                                     np.array(self.test_y)),
+                                    self._model_name)
+            early_stopping = \
+                EarlyStopping(monitor='val_accuracy',
+                              patience=50,
+                              verbose=1,
+                              mode='max')
+            reduceLR = ReduceLROnPlateau(monitor='val_accuracy',
+                                         factor=0.5,
+                                         patience=10,
+                                         min_lr=0.0001)
+            print("creating model")
+            model = simple_lstm((self.train_x.shape[1], self.train_x.shape[2]),
+                                80,  # lstm layers
+                                len(self._classes),  # number of classes
+                                dropout=0.5)
+            print("model.summary")
+            model.summary()
 
-        print("Start classification")
+            print("Start classification")
 
-        history = \
-            model.fit(np.array(self.train_x),
-                      np.array(self.train_y),
-                      batch_size=32,
-                      epochs=1000,
-                      class_weight=class_weights,
-                      validation_data=(np.array(self.test_x),
-                                       np.array(self.test_y)),
-                      callbacks=[checkpoint, early_stopping, reduceLR])
-        model = load_model(self._model_name)
-        predictions = model.predict_proba(np.array(self.test_x))
-        # plot history
-        #pyplot.plot(history.history['loss'], label='train')
-        #pyplot.plot(history.history['val_loss'], label='test')
-        #pyplot.legend()
-        #pyplot.show()
-        pred_values = model.predict(self.test_x)
+            history = \
+                model.fit(np.array(self.train_x),
+                          np.array(self.train_y),
+                          batch_size=32,
+                          epochs=1000,
+                          class_weight=class_weights,
+                          validation_data=(np.array(self.test_x),
+                                           np.array(self.test_y)),
+                          callbacks=[checkpoint, early_stopping, reduceLR])
+            model = load_model(self._model_name)
+            predictions = model.predict_proba(np.array(self.test_x))
+            # plot history
+            #pyplot.plot(history.history['loss'], label='train')
+            #pyplot.plot(history.history['val_loss'], label='test')
+            #pyplot.legend()
+            #pyplot.show()
+            pred_values = model.predict(self.test_x)
 
-        predicted_labels = np.argmax(pred_values, axis=1)
-        self.test_y = np.argmax(self.test_y, axis=1)
+            predicted_labels = np.argmax(pred_values, axis=1)
+            self.test_y = np.argmax(self.test_y, axis=1)
 
-        acc = accuracy_score(predicted_labels, self.test_y)
-        print(classification_report(self.test_y, predicted_labels))
-        precision, recall, f_score, support = \
-            precision_recall_fscore_support(self.test_y,
-                                            predicted_labels,
-                                            average='weighted')
+            acc = accuracy_score(predicted_labels, self.test_y)
+            print(classification_report(self.test_y, predicted_labels))
+            precision, recall, f_score, support = \
+                precision_recall_fscore_support(self.test_y,
+                                                predicted_labels,
+                                                average='weighted')
+        except Exception as error:
+            acc=0
+            f_score=0
+            predicted_labels=0
+            predictions=0
         return acc, f_score, predicted_labels, predictions
 
 
@@ -196,8 +203,9 @@ class ModalityClassification(multiprocessing.Process):
         self.train_x = (self.train_x - train_mean) / train_std
         self.test_x = (self.test_x - train_mean) / train_std
         self.train_x, self.train_y = shuffle(self.train_x, self.train_y)
-        #clf = clf = svm.SVC(C=150, gamma="auto", probability=True)
+        #clf = svm.SVC(C=150, gamma="auto", probability=True)
         clf = RandomForestClassifier(n_estimators=200, max_features="auto", class_weight='balanced')
+        #clf = KNeighborsClassifier(n_neighbors=5)
         clf.fit(self.train_x, self.train_y)
         pickle.dump(clf, open(self._model_name, "wb"))
         pred_values = clf.predict(self.test_x)
@@ -209,7 +217,7 @@ class ModalityClassification(multiprocessing.Process):
                                             pred_values,
                                             average='weighted')
         predictions = clf.predict_proba(self.test_x)
-        return acc, f_score, pred_values, predictions
+        return acc, f_score, pred_values, predictions, clf
 
     def _mixed_random_forest(self):
         train_mean = np.mean(self.train_x)
@@ -252,7 +260,7 @@ class ModalityClassification(multiprocessing.Process):
                                             average='weighted')
         print("acc, f_score, precision, recall", acc, f_score, precision, recall)
         predictions = np.array(all_predictions)
-        return acc, f_score, pred_values, predictions
+        return acc, f_score, pred_values, prediction, clf
 
 
     def _svm(self):
@@ -263,14 +271,33 @@ class ModalityClassification(multiprocessing.Process):
 
         clf = svm.SVC(probability=True,
                 class_weight='balanced',
-                C=500,
+                C=150,
                 random_state=100,
                 kernel='rbf')
         clf.fit(self.train_x, self.train_y)
         pickle.dump(clf, open(self._model_name, "wb"))
         pred_values = clf.predict(self.test_x)
         acc = accuracy_score(pred_values, self.test_y)
-        print(classification_report(self.test_y, pred_values))
+        #print(classification_report(self.test_y, pred_values))
+        precision, recall, f_score, support = \
+            precision_recall_fscore_support(self.test_y,
+                                            pred_values,
+                                            average='weighted')
+        predictions = clf.predict_proba(self.test_x)
+        return acc, f_score, pred_values, predictions
+
+    def _knn(self):
+        train_mean = np.mean(self.train_x)
+        train_std = np.std(self.train_x)
+        self.train_x = (self.train_x - train_mean) / train_std
+        self.test_x = (self.test_x - train_mean) / train_std
+
+        clf = KNeighborsClassifier(n_neighbors=5)
+        clf.fit(self.train_x, self.train_y)
+        pickle.dump(clf, open(self._model_name, "wb"))
+        pred_values = clf.predict(self.test_x)
+        acc = accuracy_score(pred_values, self.test_y)
+        #print(classification_report(self.test_y, pred_values))
         precision, recall, f_score, support = \
             precision_recall_fscore_support(self.test_y,
                                             pred_values,
@@ -435,16 +462,16 @@ def multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
     for classifier in classifiers:
         classifier.start()
 
-    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
-    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
-    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
+    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_queue.get()
+    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_queue.get()
+    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_queue.get()
 
     for classifier in classifiers:
         classifier.join()
 
-    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities
-    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities
-    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities
+    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model
+    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model
+    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model
 
     return eeg, gsr, ppg
 
@@ -492,16 +519,16 @@ def mixed_multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
     for classifier in classifiers:
         classifier.start()
 
-    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
-    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
-    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
+    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_queue.get()
+    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_queue.get()
+    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_queue.get()
 
     for classifier in classifiers:
         classifier.join()
 
-    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities
-    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities
-    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities
+    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_mode
+    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model
+    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model
 
     return eeg, gsr, ppg
 
@@ -521,9 +548,9 @@ def voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
     print(accuracy)
     return accuracy, fscore
 
-def equal_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels):
-    all = eeg_preds + gsr_preds + ppg_preds
-    all = all / 3
+def equal_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels, eeg_weight=0.33, gsr_weight=0.33, ppg_weight=0.33):
+    all = eeg_weight*eeg_preds + gsr_weight* gsr_preds + ppg_weight*ppg_preds
+    #all = all / 3
     print(all.shape)
     preds_fusion = np.argmax(all, axis=1)
     accuracy = accuracy_score(preds_fusion, test_labels)

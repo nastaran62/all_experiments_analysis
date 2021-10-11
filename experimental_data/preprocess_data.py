@@ -23,9 +23,8 @@ def preprocessing_exp1_1(eeg=True, gsr=True, ppg=True, face=False,
     output_path = "exp1_1/preprocessed_data"
     all_participants = os.listdir(input_path)
     all_participants.sort()
-    print(all_participants)
-    print(all_participants[7:8])
-    for participant in all_participants[7:8]:
+    for participant in all_participants:
+        print(participant)
         participant_output_path = os.path.join(output_path, participant)
         if not os.path.exists(participant_output_path):
             os.mkdir(participant_output_path)
@@ -285,6 +284,8 @@ def exp1_1_same_length(sampling_rate=128):
             gsr_data = gsr_data[0:samples]
             ppg_data = ppg_data[0:samples]
             print(eeg_data.shape, gsr_data.shape, ppg_data.shape)
+            if eeg_data.shape[1] != gsr_data.shape[0]:
+                input("wait")
             np.savetxt(os.path.join(eeg_output_path, eeg_trials[i]), eeg_data)
             np.savetxt(os.path.join(gsr_output_path, gsr_trials[i]), gsr_data)
             np.savetxt(os.path.join(ppg_output_path, ppg_trials[i]), ppg_data)
@@ -292,7 +293,7 @@ def exp1_1_same_length(sampling_rate=128):
 
 
 
-#preprocessing_exp1_1()
-#preprocessing_exp1_0()
+#preprocessing_exp1_1(eeg=False)
+#preprocessing_exp1_0(eeg=False)
 #make_like_deap_exp1_0("exp1_0/preprocessed_data", "exp1_0/prepared_labels", "exp1_0/pickled")
 exp1_1_same_length()
