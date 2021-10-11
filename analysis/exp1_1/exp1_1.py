@@ -19,6 +19,8 @@ def prepare_data(label_type="arousal", window_size=0, calculate=False):
     all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_intensity = \
         partitioning_and_getting_features(input_path, label_path, feature_path, trial_size=60, window_size=window_size, calculate=calculate)
 
+    
+
     if label_type == "arousal":
         labels = all_arousals
     elif label_type == "valence":

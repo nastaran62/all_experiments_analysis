@@ -11,6 +11,7 @@ matplotlib = "*"
 mne = "*"
 heartpy = "*"
 neurokit2 = "*"
+opencv-python = "*"
 
 [dev-packages]
 
