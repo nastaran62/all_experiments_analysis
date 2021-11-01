@@ -2,8 +2,10 @@ import numpy as np
 import os
 import csv
 import pathlib
+import pickle
 from classification import multimodal_classification, voting_fusion, equal_fusion
 from cross_subject_manual import weighted_fusion
+from tensorflow.keras.models import load_model
 
 def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
                                          participants,
@@ -76,9 +78,13 @@ def subject_independent_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
                                       eeg=eeg_parameters,
                                       gsr=gsr_parameters,
                                       ppg=ppg_parameters)
-        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_result
-        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_result
-        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_result
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
+
+        eeg_model = load_model(os.path.join(model_path, "eeg_lstm.h5"))
+        gsr_model = load_model(os.path.join(model_path, "gsr_lstm.h5"))
+        ppg_model = load_model(os.path.join(model_path, "ppg_lstm.h5"))
 
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore)
@@ -286,9 +292,13 @@ def subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_lab
                                       eeg=eeg_parameters,
                                       gsr=eeg_ppg_parameters,
                                       ppg=ppg_parameters)
-        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_result
-        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_result
-        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_result
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
+
+        eeg_model = load_model(os.path.join(model_path, "eeg_lstm.h5"))
+        gsr_model = load_model(os.path.join(model_path, "gsr_lstm.h5"))
+        ppg_model = load_model(os.path.join(model_path, "ppg_lstm.h5"))
 
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore)

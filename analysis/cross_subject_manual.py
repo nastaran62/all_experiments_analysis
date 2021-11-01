@@ -2,6 +2,7 @@ import numpy as np
 import os
 import pathlib
 import csv
+import pickle
 from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.utils import shuffle
 from classification import multimodal_classification, voting_fusion, equal_fusion
@@ -59,6 +60,10 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path=".", label_
         eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
         gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
         ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
+
+        eeg_model = load_model(os.path.join(model_path, "eeg_lstm.h5"))
+        gsr_model = load_model(os.path.join(model_path, "gsr_lstm.h5"))
+        ppg_model = load_model(os.path.join(model_path, "ppg_lstm.h5"))
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore)
 
@@ -68,9 +73,9 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path=".", label_
         all_ppg_accuracy.append(ppg_accuracy)
         all_ppg_fscore.append(ppg_fscore)
 
-        #eeg_weight, gsr_weight, ppg_weight = \
-        #    weighted_fusion(eeg_model, gsr_model, ppg_model, eeg_train, gsr_train, ppg_train,train_labels)
-        #input(eeg_weight, gsr_weight, ppg_weight)
+        eeg_weight, gsr_weight, ppg_weight = \
+            weighted_fusion(eeg_model, gsr_model, ppg_model, eeg_train, gsr_train, ppg_train,train_labels)
+        input(eeg_weight, gsr_weight, ppg_weight)
 
         fusion_accuracy, fusion_fscore = \
             voting_fusion(eeg_preds, gsr_preds, ppg_preds, test_labels)
@@ -80,8 +85,6 @@ def shuffled_kfold_evaluation(eeg, gsr, ppg, labels, k=5, model_path=".", label_
         efusion_accuracy, efusion_fscore = \
             equal_fusion(eeg_probabilities, gsr_probabilities,
                           ppg_probabilities, test_labels)
-
-
 
         all_efusion_accuracy.append(fusion_accuracy)
         all_efusion_fscore.append(efusion_fscore)
@@ -415,9 +418,13 @@ def kfold_evaluation(eeg, gsr, ppg, labels, k=3, model_path=".", label_type="aro
                                       eeg=eeg_parameters,
                                       gsr=gsr_parameters,
                                       ppg=ppg_parameters)
-        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_result
-        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_result
-        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_result
+        eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_result
+        gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_result
+        ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_result
+
+        eeg_model = pickle.load(open(os.path.join(model_path, "eeg_rf.pickle"), "rb"))
+        gsr_model = pickle.load(open(os.path.join(model_path, "gsr_rf.pickle"), "rb"))
+        ppg_model = pickle.load(open(os.path.join(model_path, "ppg_rf.pickle"), "rb"))
 
         all_eeg_accuracy.append(eeg_accuracy)
         all_eeg_fscore.append(eeg_fscore)

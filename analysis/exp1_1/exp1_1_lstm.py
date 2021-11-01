@@ -17,6 +17,34 @@ def prepare_data(label_type="arousal", window_size=0, calculate=False):
     all_eeg, all_gsr, all_ppg, all_emotions, all_arousals, all_valences, all_intensity = \
         partitioning_and_getting_features(input_path, label_path, feature_path, trial_size=60, window_size=window_size, calculate=calculate)
 
+    participants_names = ["p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27",
+                    "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35",
+                    "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43"]
+
+    trials_names = ["t01", "t03", "t04", "t05", "t06"]
+    p = 0
+    with(open("one_minute_labels.csv", "w")) as csv_file:
+        csv_writer = csv.writer(csv_file)
+        row = ["emotion", "arousal", "valence", "intensity"]
+        csv_writer.writerow(row)
+        csv_file.flush()
+        for participant in all_eeg:
+            t = 0
+            for trials in participant:
+                i = 0
+                for trial in trials:
+                    emotion = all_emotions[p][t][i][0]
+                    arousal = all_arousals[p][t][i][0]
+                    valence = all_valences[p][t][i][0]
+                    intensity = all_intensity[p][t][i][0]
+                    name = "{0}-{1}-{2}".format(participants_names[p], trials_names[t], str(i).zfill(2))
+                    row = [name, emotion, arousal, valence, intensity]
+                    csv_writer.writerow(row)
+                    csv_file.flush()
+                    i += 1
+                t += 1
+            p += 1
+
     if label_type == "arousal":
         labels = all_arousals
     elif label_type == "valence":
@@ -111,6 +139,7 @@ def subject_independent(label_type="arousal", window_size=0, calculate=False, fo
 
     all_eeg, all_gsr, all_ppg, all_labels = \
         prepare_data(label_type=label_type, window_size=window_size, calculate=calculate)
+
     subject_independent_lstm_cross_validation(all_eeg, all_gsr, all_ppg, all_labels,
                                          PARTICIPANTS,
                                          make_train_test_set,

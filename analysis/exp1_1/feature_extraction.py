@@ -17,7 +17,8 @@ emotions = {"Anger":[0, "4", "2"],
              "Fear":[1, "4", "2"],
              "Happiness":[2, "4", "5"],
              "Neutral":[3, "3", "3"],
-             "Sadness":[4, "2", "2"]}
+             "Sadness":[4, "2", "2"],
+             "other":[5, "3", "3"]}
 
 def partitioning_and_getting_features(input_path, label_path, feature_path, trial_size=60, window_size=0, calculate=False):
     '''
@@ -38,7 +39,9 @@ def partitioning_and_getting_features(input_path, label_path, feature_path, tria
     all_participants_arousals = []
     all_participants_valences = []
     all_participants_intensity = []
+    p = 0
     for participant in all_participants:
+        print("p", p)
         if calculate is True:
             # temporary, we want to only eeg
             #(all_eeg_trials, all_gsr_trials, all_ppg_trials,
@@ -84,16 +87,19 @@ def partitioning_and_getting_features(input_path, label_path, feature_path, tria
                                       labels,
                                       feature_extraction=get_ppg_features,
                                       window_size=window_size)
+            print(len(all_arousal))
 
             if not os.path.exists(feature_path):
                 pathlib.Path(feature_path).mkdir(parents=True, exist_ok=True)
             pickle.dump((all_eeg_trials, all_gsr_trials, all_ppg_trials,
                          all_emotions, all_arousal, all_valence, all_intensity),
                          open("{0}/{1}.pickle".format(feature_path, participant), "wb"))
+            print("leeeeeeeeeeeeeeeeeeeeeen", len(all_eeg_trials[0]), len(all_emotions[0]))
         else:
             (all_eeg_trials, all_gsr_trials, all_ppg_trials,
             all_emotions, all_arousal, all_valence, all_intensity) = \
                 pickle.load(open("{0}/{1}.pickle".format(feature_path, participant), "rb"))
+            print("leeeeeeeeeeeeeeeeeeeeeen", len(all_eeg_trials[0]), len(all_emotions[0]))
         # The output for labels are the same for all modalities
         # Since based on labels we have to apply some changes on data (remove when label is other)
         # I had to put calculating labels inside the modality processing method
@@ -321,6 +327,10 @@ def three_part_partitioning_and_windowing(trials_path,
                 valence = labels.at[t, "valence-3"].astype(str)
                 intensity = labels.at[t, "intensity-3"].astype(str)
             if emotion == "other":
+                j += 1
+                continue
+
+            if int(intensity) <= 2:
                 j += 1
                 continue
 

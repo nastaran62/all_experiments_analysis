@@ -217,7 +217,7 @@ class ModalityClassification(multiprocessing.Process):
                                             pred_values,
                                             average='weighted')
         predictions = clf.predict_proba(self.test_x)
-        return acc, f_score, pred_values, predictions, clf
+        return acc, f_score, pred_values, predictions
 
     def _mixed_random_forest(self):
         train_mean = np.mean(self.train_x)
@@ -260,7 +260,7 @@ class ModalityClassification(multiprocessing.Process):
                                             average='weighted')
         print("acc, f_score, precision, recall", acc, f_score, precision, recall)
         predictions = np.array(all_predictions)
-        return acc, f_score, pred_values, prediction, clf
+        return acc, f_score, pred_values, prediction
 
 
     def _svm(self):
@@ -462,16 +462,16 @@ def multimodal_classification(train_labels, test_labels, eeg, gsr, ppg):
     for classifier in classifiers:
         classifier.start()
 
-    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model = eeg_queue.get()
-    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model = gsr_queue.get()
-    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model = ppg_queue.get()
+    eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities = eeg_queue.get()
+    gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities = gsr_queue.get()
+    ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities = ppg_queue.get()
 
     for classifier in classifiers:
         classifier.join()
 
-    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities, eeg_model
-    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities, gsr_model
-    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities, ppg_model
+    eeg = eeg_accuracy, eeg_fscore, eeg_preds, eeg_probabilities
+    gsr = gsr_accuracy, gsr_fscore, gsr_preds, gsr_probabilities
+    ppg = ppg_accuracy, ppg_fscore, ppg_preds, ppg_probabilities
 
     return eeg, gsr, ppg
 

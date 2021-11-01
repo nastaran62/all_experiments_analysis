@@ -19,6 +19,7 @@ def prepare_data(input_path, output_path, baseline=5):
                 if not success:
                     break
                 all_frames.append(frame)
+            vidcap.release()
             fps = int(fps)
             all_frames = all_frames[fps*baseline:]
 
@@ -29,6 +30,7 @@ def prepare_data(input_path, output_path, baseline=5):
             end = part_length
             i = 0
             while end < len(all_frames):
+                print(start, end)
                 folder = os.path.join(output_path, participant)
                 if not os.path.exists(folder):
                     os.mkdir(folder)
@@ -42,9 +44,12 @@ def prepare_data(input_path, output_path, baseline=5):
                 writer = cv2.VideoWriter(file_name,
                                          coded,
                                          fps,
-                                         (1280, 720))
+                                         (640, 480))
+                j = 0
                 for frame in part:
                     writer.write(frame)
+                    j +=1
+                print(j)
                 writer.release()
 
                 start = end

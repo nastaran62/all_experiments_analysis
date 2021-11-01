@@ -43,14 +43,13 @@ LABEL_TYPE = "emotion"
 #exp1_0_lstm_subject_dependent(label_type=LABEL_TYPE, window_size=1, calculate=False, fold=2)
 
 from exp1_1.exp1_1 import cross_subject as exp1_1_cross_subject
-'''
-exp1_1_cross_subject(label_type="liwc_valence", window_size=5, calculate=True, shuffle=shuffle, fold=5)
+
 label_types = ["arousal", "valence", "emotion"]
 shuffles = [False]
 for label_type in label_types:
     for shuffle in shuffles:
-        exp1_1_cross_subject(label_type=label_type, window_size=0, calculate=True, shuffle=shuffle, fold=5)
-'''
+        exp1_1_cross_subject(label_type=label_type, window_size=0, calculate=False, shuffle=shuffle, fold=5)
+
 from exp1_1.exp1_1 import subject_dependent as exp1_1_subject_dependent
 
 #exp1_1_subject_dependent(label_type="arousal", window_size=5, calculate=True, shuffle=False, fold=3)
@@ -74,7 +73,7 @@ for label_type in label_types:
 
 from exp1_1.exp1_1_lstm import subject_independent as exp1_1_lstm_subject_independent
 '''
-label_types = ["arousal", "valence","emotion"]
+label_types = ["arousal", "valence"]
 shuffles = [False]
 for label_type in label_types:
     for shuffle in shuffles:
@@ -83,12 +82,12 @@ for label_type in label_types:
 #exp1_1_lstm_subject_independent(label_type=LABEL_TYPE, window_size=1, calculate=True, fold=1)
 
 from exp1_1.exp1_1_lstm import cross_subject as exp1_1_lstm_cross_subject
-
+'''
 label_types = ["arousal", "valence", "emotion"]
 for label_type in label_types:
     exp1_1_lstm_cross_subject(label_type=label_type, window_size=5, calculate=False, fold=10)
 
-
+'''
 from exp1_1.exp1_1_lstm import subject_dependent as exp1_1_lstm_subject_dependent
 '''
 label_types = ["emotion"]
