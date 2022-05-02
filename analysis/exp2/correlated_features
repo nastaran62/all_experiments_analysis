@@ -1,0 +1,47 @@
+PPG features
+
+['mean']
+['median', 'peak_mean', 'peak_median', 'peak_min']
+['max', 'peak_max', 'peak_mean', 'peak_median', 'peak_min', 'peak_neg_derivative', 'peak_pos_derivative', 'peak_std', 'peak_var', 'std']
+['HRV_MeanNN', 'HRV_MedianNN', 'bpm', 'ibi', 'rate_mean', 'rate_median']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_RMSSD', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'pnn50', 'rate_neg_derivative', 'rate_pos_derivative', 'rmssd', 'sd1']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'hrv_madnn', 'rate_neg_derivative', 'rate_pos_derivative', 'rmssd', 'sd1', 'sdnn']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'pnn50', 'rate_neg_derivative', 'rate_pos_derivative', 'rmssd', 'sd1', 'sdnn']
+['max', 'median', 'peak_max', 'peak_mean', 'peak_median', 'peak_min', 'peak_neg_derivative', 'peak_pos_derivative', 'peak_std', 'peak_var', 'std']
+['max', 'peak_max', 'peak_mean', 'peak_median', 'peak_min', 'peak_neg_derivative', 'peak_pos_derivative', 'peak_std', 'peak_var', 'std']
+['peak_kurt', 'peak_skew']
+['max', 'peak_max', 'peak_neg_derivative', 'peak_pos_derivative', 'peak_std', 'peak_var']
+['count']
+['rate_max']
+['rate_min']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var']
+['rate_skew']
+['rate_kurt']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var', 'rmssd']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'hrv_madnn', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var', 'rmssd', 'sd1', 'sdnn']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var', 'rmssd', 'sd1', 'sdnn']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_IQRNN', 'HRV_MCVNN', 'HRV_MadNN', 'HRV_RMSSD', 'HRV_SDNN', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'pnn50', 'rate_neg_derivative', 'rate_pos_derivative', 'rate_std', 'rate_var', 'rmssd', 'sd1']
+['HRV_CVNN', 'HRV_CVSD', 'HRV_RMSSD', 'HRV_SDSD', 'HRV_pNN20', 'HRV_pNN50', 'pnn50', 'rate_neg_derivative', 'rate_pos_derivative', 'rmssd', 'sd1']
+['HRV_HTI']
+['HRV_TINN']
+
+
+
+GSR features
+
+['max', 'mean', 'median', 'min', 'tonic_max', 'tonic_mean', 'tonic_median', 'tonic_min']
+['std', 'tonic_std', 'tonic_var', 'var']
+['skew', 'tonic_skew']
+['kurtosis', 'tonic_kurtosis']
+['phasic_mean']
+['phasic_median']
+['phasic_skew']
+['phasic_kurtosis']
+['neg_deravatives', 'phasic_max', 'phasic_min', 'phasic_neg_deravatives', 'phasic_pos_derivatives', 'phasic_std', 'phasic_var', 'pos_derivatives', 'tonic_neg_deravatives', 'tonic_pos_derivatives']
+['peaks_freq', 'peaks_max', 'peaks_mean', 'peaks_median', 'peaks_pos_derivatives', 'peaks_std', 'peaks_var']
+['peaks_min']
+['peaks_skew']
+['peaks_kurtosis']
+
+

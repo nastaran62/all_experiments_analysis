@@ -26,7 +26,7 @@ class EegFeatures():
         return np.array(all_features)
 
 
-    def get_total_power_bands(self):
+    def get_total_power_bands(self, method="mean"):
         '''
         calculates alpha, betha, delta, gamma bands
         It uses fft
@@ -37,10 +37,10 @@ class EegFeatures():
         :rtype np.array(float, float, float, float, float)
         :return delta, theta, alpha, beta, gamma
         '''
-        return self._get_power_bands(self.data.ravel())
+        return self._get_power_bands(self.data.ravel(), method=method)
 
 
-    def _get_power_bands(self, signal):
+    def _get_power_bands(self, signal, method="mean"):
         sample_count, = signal.shape
         # Get real amplitudes of FFT (only in postive frequencies)
         fft_values = np.absolute(np.fft.rfft(signal))
@@ -62,7 +62,12 @@ class EegFeatures():
             if(fft_values[freq_ix].size == 0):
                 eeg_band_fft[band] = 0
             else:
-                eeg_band_fft[band] = np.mean(fft_values[freq_ix])
+                if method == "mean":
+                    eeg_band_fft[band] = np.mean(fft_values[freq_ix])
+                elif method == "psd":
+                    eeg_band_fft[band] = np.sum(fft_values[freq_ix]**2)
+                elif method == "entropy":
+                    eeg_band_fft[band] = np.sum((fft_values[freq_ix]**2)*np.log(fft_values[freq_ix]**2))
         bands = np.array([eeg_band_fft['Alpha'],
                         eeg_band_fft['Beta'],
                         eeg_band_fft['Theta'],
@@ -71,7 +76,7 @@ class EegFeatures():
         return bands
 
 
-    def get_channels_power_bands(self):
+    def get_channels_power_bands(self, method="mean"):
         '''
         calculates alpha, betha, delta, gamma bands for each channel
         It uses fft
@@ -86,7 +91,7 @@ class EegFeatures():
         ch = 0
         eeg_bands = []
         while ch < columns:
-            eeg_band = self._get_power_bands(self.data[ch, :])
+            eeg_band = self._get_power_bands(self.data[ch, :], method=method)
             ch += 1
             eeg_bands.append(eeg_band)
         return ((np.array(eeg_bands)).ravel())

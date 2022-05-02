@@ -7,8 +7,8 @@ class PpgPreprocessing():
         self._sampling_rate = sampling_rate
         self.data = data
 
-    def filtering1(self):
-        self.data = nk.ppg_clean(self.data, sampling_rate=self._sampling_rate)
+    def neurokit_filtering(self):
+        self.data = nk.ppg_clean(self.data, sampling_rate=self._sampling_rate, method="nabian2018")
 
 
     def filtering(self, low_pass=0.5, high_pass=4):
@@ -20,13 +20,16 @@ class PpgPreprocessing():
 
         self.data = filtered
 
-    def baseline_normalization(self, baseline_duration=3, baseline=None):
-        if baseline is None:
-            baseline = self.data[0:self._sampling_rate*baseline_duration]
+    def baseline_normalization(self, baseline_duration=3, baseline=None, normalization=True):
+        if normalization is True:
+            if baseline is None:
+                baseline = self.data[0:self._sampling_rate*baseline_duration]
+            else:
+                baseline_duration = 0
+            baseline_avg = np.mean(baseline)
+            self.data = self.data[self._sampling_rate*baseline_duration:] - baseline_avg
         else:
-            baseline_duration = 0
-        baseline_avg = np.mean(baseline)
-        self.data = self.data[self._sampling_rate*baseline_duration:] - baseline_avg
+            self.data = self.data[self._sampling_rate*baseline_duration:]
 
     def get_data(self):
         return self.data

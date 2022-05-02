@@ -9,6 +9,8 @@ import sys
 import pandas as pd
 import pickle
 import numpy as np
+
+from analysis.exp1_0.feature_extraction import display_signal
 sys.path.append('../')
 import pathlib
 
@@ -94,12 +96,12 @@ def preprocessing_exp1_1(eeg=True, gsr=True, ppg=True, face=False,
                 np.savetxt(file_name, preprocessed_data)
 
 def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
-                         start_trim=0, end_trim=0, baseline_duration=3):
-    input_path = "exp1_0/prepared_data"
-    output_path = "exp1_0/preprocessed_data"
+                         start_trim=0, end_trim=0, baseline_duration=3,
+                         input_path="exp1_0/prepared_data",
+                         output_path="exp1_0/preprocessed_data"):
     all_participants = os.listdir(input_path)
     all_participants.sort()
-    for participant in all_participants[22:23]:
+    for participant in all_participants[10:11]:
         print(participant)
         participant_output_path = os.path.join(output_path, participant)
         if not os.path.exists(participant_output_path):
@@ -119,11 +121,13 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
                     EegPreprocessing(eeg_data,
                                     channel_names=channel_names,
                                     sampling_rate=128)
+                preprocessing.interpolate_bad_channels()
                 preprocessing.filter_data()
                 preprocessing.interpolate_bad_channels(bad_channels=['Fp2', 'P3', 'P4', 'T5'])
                 preprocessing.rereferencing(referencing_value='average')
                 #preprocessing.channel_wise_baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()
+                preprocessing.interpolate_bad_channels()
                 #preprocessed_data = \
                 #    preprocessed_data[:, start_trim*128:-end_trim*128]
                 file_name = os.path.join(eeg_output_path, eeg_file)
@@ -138,12 +142,14 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
             for gsr_file in gsr_files:
                 data_frame = pd.read_csv(os.path.join(gsr_path, gsr_file))
                 gsr_data = data_frame.to_numpy()
+                display_signal(gsr_data[0:500])
                 preprocessing = \
                     GsrPreprocessing(gsr_data[:,0],
                                     sampling_rate=128)
                 preprocessing.gsr_noise_cancelation()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()
+                display_signal(preprocessed_data[0:500])
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(gsr_output_path, gsr_file)
@@ -158,12 +164,14 @@ def preprocessing_exp1_0(eeg=True, gsr=True, ppg=True, face=False,
             for ppg_file in ppg_files:
                 data_frame = pd.read_csv(os.path.join(ppg_path, ppg_file))
                 ppg_data = data_frame.to_numpy()
+                display_signal(ppg_data[0:600])
                 preprocessing = \
                     PpgPreprocessing(ppg_data[:, 0],
                                      sampling_rate=128)
                 preprocessing.filtering()
                 #preprocessing.baseline_normalization(baseline_duration=baseline_duration)
                 preprocessed_data = preprocessing.get_data()
+                display_signal(preprocessed_data[0:600])
                 #preprocessed_data = \
                 #    preprocessed_data[start_trim*128:-end_trim*128]
                 file_name = os.path.join(ppg_output_path, ppg_file)
@@ -296,4 +304,4 @@ def exp1_1_same_length(sampling_rate=128):
 #preprocessing_exp1_1(eeg=False)
 #preprocessing_exp1_0(eeg=False)
 #make_like_deap_exp1_0("exp1_0/preprocessed_data", "exp1_0/prepared_labels", "exp1_0/pickled")
-exp1_1_same_length()
+#exp1_1_same_length()

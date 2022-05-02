@@ -1,5 +1,7 @@
 import numpy as np
 import scipy
+import neurokit2 as nk
+import matplotlib.pyplot as plt
 
 class GsrFeatureExtraction():
     def __init__(self, data, sampling_rate):
@@ -213,3 +215,5 @@ class GsrFeatureExtraction():
                     np.max(freq_data) + np.min(freq_data) + (np.max(freq_data)-np.min(freq_data)))
 
         return features
+    
+

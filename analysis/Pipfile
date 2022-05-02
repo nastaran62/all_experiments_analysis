@@ -17,6 +17,10 @@ pywavelets = "*"
 heartpy = "*"
 seaborn = "*"
 neurokit2 = "*"
+mne = "*"
+statsmodels = "*"
+pingouin = "*"
+rpy2 = "*"
 
 [dev-packages]
 

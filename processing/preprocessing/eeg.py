@@ -24,7 +24,7 @@ class EegPreprocessing():
         self.__info = mne.create_info(channel_names,
                                       sampling_rate,
                                       channel_types)
-        self.__info['bads'] = ['Fp2']
+        self.__info['bads'] = []
         self._mne_raw = mne.io.RawArray(channel_data, self.__info)
         self._mne_raw.set_montage('standard_1020')
         self._mne_raw.interpolate_bads(reset_bads=False)
@@ -38,7 +38,7 @@ class EegPreprocessing():
         events = mne.make_fixed_length_events(self._mne_raw)
         return mne.Epochs(self._mne_raw, events, preload=True)
 
-    def filter_data(self, low_frequency=1, high_frequency=45, notch_frequencies=[60]):
+    def filter_data(self, low_frequency=1, high_frequency=45, notch_frequencies=[50]):
         '''
         Apply notch filter, low pass and high pass (bandpass) filter on mne data
         '''
@@ -75,7 +75,7 @@ class EegPreprocessing():
         if bad_channels is None:
             self._mne_raw.load_data()
             self.display()
-            bad_channels = ['Fp2']
+            bad_channels = []
             
             while True:
                 bad_channel = input()
@@ -171,8 +171,9 @@ def exp1_0_eeg_preprocessing(eeg_data, channel_names=channel_names, sampling_rat
         EegPreprocessing(eeg_data,
                          channel_names=channel_names,
                          sampling_rate=sampling_rate)
+    preprocessing.interpolate_bad_channels()
     preprocessing.filter_data()
-    # preprocessing.interpolate_bad_channels()
+    preprocessing.interpolate_bad_channels()
     # preprocessing.interpolate_bad_channels()
     # preprocessing.baseline_normalization()
     # preprocessing.filter_data()
@@ -180,11 +181,32 @@ def exp1_0_eeg_preprocessing(eeg_data, channel_names=channel_names, sampling_rat
     # preprocessing.ica_component_rejection()
     # preprocessing.display()
     preprocessed_data = preprocessing.get_data()
+    preprocessing.interpolate_bad_channels()
     #cleaned_epochs, bad_epochs = preprocessing.reject_bad_epochs()
     # print(bad_epochs)
     #output = normalize(np.array(preprocessed_data), axis=1)
     output = normalization(preprocessed_data)
+    
 
     return output
 
+def exp2_eeg_preprocessing(eeg_data, channel_names=channel_names, sampling_rate=125):
+    preprocessing = \
+        EegPreprocessing(eeg_data,
+                         channel_names=channel_names,
+                         sampling_rate=sampling_rate)
+    preprocessing.filter_data()
+    preprocessing.interpolate_bad_channels()
+    # preprocessing.interpolate_bad_channels()
+    # preprocessing.baseline_normalization()
+    # preprocessing.filter_data()
+    preprocessing.rereferencing(referencing_value='average')
+    # preprocessing.ica_component_rejection()
+    preprocessing.display()
+    preprocessed_data = preprocessing.get_data()
+    #cleaned_epochs, bad_epochs = preprocessing.reject_bad_epochs()
+    # print(bad_epochs)
+    #output = normalize(np.array(preprocessed_data), axis=1)
+    #output = normalization(preprocessed_data)
+    return preprocessed_data
 

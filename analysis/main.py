@@ -1,5 +1,7 @@
 
 from sklearn.utils import shuffle
+from experimental_data.prepare_data import preprocessing_exp1_0
+
 
 '''
 from exp1_1.exp1_1_lstm import cross_subject as exp1_1_lstm_cross_subject
@@ -27,9 +29,9 @@ LABEL_TYPE = "emotion"
 #from exp1_0.exp1_0 import cross_subject as exp1_0#_cross_subject
 #exp1_0_cross_subject(label_type=LABEL_TYPE, window_size=1, calculate=False, shuffle=False, fold=5)
 
-#from exp1_0.exp1_0 import subject_independent as exp1_0_subject_independent
-#exp1_0_subject_independent(label_type=LABEL_TYPE, window_size=1, calculate=False, fold=1)
-
+from exp1_0.exp1_0 import subject_independent as exp1_0_subject_independent
+exp1_0_subject_independent(label_type=LABEL_TYPE, window_size=1, calculate=False, fold=1)
+input()
 #from exp1_0.exp1_0 import subject_dependent as exp1_0_subject_dependent
 #exp1_0_subject_dependent(label_type=LABEL_TYPE, window_size=1, calculate=False, shuffle=False, fold=5)
 

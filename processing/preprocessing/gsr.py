@@ -22,13 +22,16 @@ class GsrPreprocessing():
         # Removing rapid transient artifacts
         self.data = signal.medfilt(output, kernel_size=5)
 
-    def baseline_normalization(self, baseline_duration=3, baseline=None):
-        if baseline is None:
-            baseline = self.data[0:self._sampling_rate*baseline_duration]
+    def baseline_normalization(self, baseline_duration=3, baseline=None, normalization=True):
+        if normalization is True:
+            if baseline is None:
+                baseline = self.data[0:self._sampling_rate*baseline_duration]
+            else:
+                baseline_duration = 0
+            baseline_avg = np.mean(baseline)
+            self.data = self.data[self._sampling_rate*baseline_duration:] - baseline_avg
         else:
-            baseline_duration = 0
-        baseline_avg = np.mean(baseline)
-        self.data = self.data[self._sampling_rate*baseline_duration:] - baseline_avg
+            self.data = self.data[self._sampling_rate*baseline_duration:]
 
     def get_data(self):
         return self.data

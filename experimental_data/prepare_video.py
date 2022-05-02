@@ -56,5 +56,5 @@ def prepare_data(input_path, output_path, baseline=5):
                 end = end + part_length
                 i += 1
 
-prepare_data("/home/zsaf419/backup-data/collected_data/conversation",
-             "/home/zsaf419/Documents/project/all_experiments_analysis/experimental_data/exp1_1/prepared_video")
+prepare_data("exp1_1/raw_data/",
+             "/exp1_1/prepared_video")
