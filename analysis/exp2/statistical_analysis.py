@@ -26,7 +26,7 @@ def arousal_valence_ttest():
     all_f2f = pd.read_csv("../../experimental_data/exp2-0/all_f2f.csv")
     all_remote = pd.read_csv("../../experimental_data/exp2-0/all_remote.csv")
     all_data = pd.concat([all_f2f, all_remote], ignore_index=True, keys=all_f2f.index)
-    variables = ["intensity", "arousal", "valence", "dominance"] 
+    variables = ["intensity", "arousal", "valence", "dominance"]
     with open("result/arousal-valence-ttest.csv", 'a') as statistics_csv_file:
         csv_writer = csv.writer(statistics_csv_file)
         for variable in variables:
@@ -48,7 +48,7 @@ def arousal_valence_anova():
     all_f2f = pd.read_csv("../../experimental_data/exp2-0/all_f2f.csv")
     all_remote = pd.read_csv("../../experimental_data/exp2-0/all_remote.csv")
     all_data = pd.concat([all_f2f, all_remote], ignore_index=True, keys=all_f2f.index)
-    variables = ["intensity", "arousal", "valence", "dominance"] 
+    variables = ["intensity", "arousal", "valence", "dominance"]
     with open("result/av-anova-emotion.csv", 'a') as statistics_csv_file:
         csv_writer = csv.writer(statistics_csv_file)
         for variable in variables:
@@ -89,7 +89,7 @@ def empathy_artanova_test():
                 row = [variable] + list(df_result.values[i])
                 csv_writer.writerow(row)
             statistics_csv_file.flush()
-    
+
     # t-test
     with open("result/empathy-ttest.csv", 'a') as statistics_csv_file:
         csv_writer = csv.writer(statistics_csv_file)
@@ -110,7 +110,7 @@ def empathy_artanova_test():
         sns.pointplot(data=all_empathy, x="task", hue="gender", y=variable, dodge=True, markers=['o', 's'],
                         capsize=.1, errwidth=1, palette='colorblind')
     plt.show()
-    
+
 
 
 def anova_test():
@@ -123,26 +123,26 @@ def anova_test():
 
     gsr_header = ["participant", "stimuli", "task",
               "mean", "median", "max", "min", "var", "std", "skew", "kurtosis",
-              "pos_derivatives", "neg_deravatives","phasic_mean", "phasic_median", 
+              "pos_derivatives", "neg_deravatives","phasic_mean", "phasic_median",
               "phasic_max", "phasic_min", "phasic_var", "phasic_std", "phasic_skew",
               "phasic_kurtosis", "phasic_pos_derivatives", "phasic_neg_deravatives",
-              "tonic_mean", "tonic_median", "tonic_max", "tonic_min", "tonic_var", 
+              "tonic_mean", "tonic_median", "tonic_max", "tonic_min", "tonic_var",
               "tonic_std", "tonic_skew", "tonic_kurtosis", "tonic_pos_derivatives",
               "tonic_neg_deravatives", "peaks_mean", "peaks_median","peaks_max",
               "peaks_min", "peaks_var", "peaks_std", "peaks_skew", "peaks_kurtosis",
               "peaks_pos_derivatives", "peaks_freq"]
-    
+
     hp_features_names = ["mean", "std", "median", "max", "hrv_madnn", "ibi", "bpm", "pnn50", "sdnn", "sd1", "rmssd"]
 
     peaks_features_names = ["peak_mean", "peak_median", "peak_max", "peak_min",
-                            "peak_var", "peak_std", "peak_skew", "peak_kurt", 
+                            "peak_var", "peak_std", "peak_skew", "peak_kurt",
                             "peak_pos_derivative", "peak_neg_derivative", "count"]
     rate_features_names = ["rate_mean", "rate_median", "rate_max", "rate_min",
-                            "rate_var", "rate_std", "rate_skew", "rate_kurt", 
+                            "rate_var", "rate_std", "rate_skew", "rate_kurt",
                             "rate_pos_derivative", "rate_neg_derivative"]
 
-    hrv_features_names = ['HRV_MeanNN', 'HRV_SDNN',  'HRV_RMSSD', 'HRV_SDSD', 
-                            'HRV_CVNN', 'HRV_CVSD', 'HRV_MedianNN', 'HRV_MadNN', 'HRV_MCVNN', 
+    hrv_features_names = ['HRV_MeanNN', 'HRV_SDNN',  'HRV_RMSSD', 'HRV_SDSD',
+                            'HRV_CVNN', 'HRV_CVSD', 'HRV_MedianNN', 'HRV_MadNN', 'HRV_MCVNN',
                             'HRV_IQRNN', 'HRV_pNN50', 'HRV_pNN20', 'HRV_HTI', 'HRV_TINN']
                             #'HRV_SDANN1', 'HRV_SDNNI1', 'HRV_SDANN2', 'HRV_SDNNI2', 'HRV_SDANN5', 'HRV_SDNNI5',
 
@@ -155,7 +155,7 @@ def anova_test():
         try:
             print(variable)
             with open("result/conv/task-gender.csv", 'a') as statistics_csv_file:
-        
+
                 csv_writer = csv.writer(statistics_csv_file)
                 treatment = "task"
                 condition = "gender"
@@ -166,10 +166,10 @@ def anova_test():
                 df = df.groupby(["participant", treatment, condition], as_index=False)[variable].mean()
                 #df = df.groupby(["participant", condition], as_index=False)[variable].mean()
                 df.to_csv("temp.csv", index = False)
-                
 
-            
-                # I tried to use the ARTool in python, but it raises some errors. 
+
+
+                # I tried to use the ARTool in python, but it raises some errors.
                 # So I write the code in R and called it here
                 formula = "{0} ~ factor({1})*factor({2}) + (1|{3})".format(variable, treatment, condition, "participant")
                 #formula = "{0} ~ factor({1}) + (1|{2})".format(variable, condition, "participant")
@@ -193,7 +193,7 @@ def anova_test():
                 sns.set()
                 sns.pointplot(data=df, x=condition, y=variable, hue=treatment, dodge=True, markers=['o', 's'],
                             capsize=.1, errwidth=1, palette='colorblind')
-        
+
         except Exception as error:
             print(error)
             print("not available for {0}".format(variable))
@@ -206,31 +206,32 @@ def threeway_anova_test():
 
     modality_data = pd.read_csv("extracted_data/normalized/ppg_features_conv.csv")
     modality_data = pd.read_csv("extracted_data/normalized/eeg_normalized.csv")
+    modality_data = pd.read_csv("extracted_data/face_features_avg.csv")
 
     all_data = pd.concat([all_f2f, all_remote], ignore_index=True, keys=all_f2f.index)
 
     gsr_header = ["participant", "stimuli", "task",
               "mean", "median", "max", "min", "var", "std", "skew", "kurtosis",
-              "pos_derivatives", "neg_deravatives","phasic_mean", "phasic_median", 
+              "pos_derivatives", "neg_deravatives","phasic_mean", "phasic_median",
               "phasic_max", "phasic_min", "phasic_var", "phasic_std", "phasic_skew",
               "phasic_kurtosis", "phasic_pos_derivatives", "phasic_neg_deravatives",
-              "tonic_mean", "tonic_median", "tonic_max", "tonic_min", "tonic_var", 
+              "tonic_mean", "tonic_median", "tonic_max", "tonic_min", "tonic_var",
               "tonic_std", "tonic_skew", "tonic_kurtosis", "tonic_pos_derivatives",
               "tonic_neg_deravatives", "peaks_mean", "peaks_median","peaks_max",
               "peaks_min", "peaks_var", "peaks_std", "peaks_skew", "peaks_kurtosis",
               "peaks_pos_derivatives", "peaks_freq"]
-    
+
     hp_features_names = ["mean", "std", "median", "max", "hrv_madnn", "ibi", "bpm", "pnn50", "sdnn", "sd1", "rmssd"]
 
     peaks_features_names = ["peak_mean", "peak_median", "peak_max", "peak_min",
-                            "peak_var", "peak_std", "peak_skew", "peak_kurt", 
+                            "peak_var", "peak_std", "peak_skew", "peak_kurt",
                             "peak_pos_derivative", "peak_neg_derivative", "count"]
     rate_features_names = ["rate_mean", "rate_median", "rate_max", "rate_min",
-                            "rate_var", "rate_std", "rate_skew", "rate_kurt", 
+                            "rate_var", "rate_std", "rate_skew", "rate_kurt",
                             "rate_pos_derivative", "rate_neg_derivative"]
 
-    hrv_features_names = ['HRV_MeanNN', 'HRV_SDNN',  'HRV_RMSSD', 'HRV_SDSD', 
-                            'HRV_CVNN', 'HRV_CVSD', 'HRV_MedianNN', 'HRV_MadNN', 'HRV_MCVNN', 
+    hrv_features_names = ['HRV_MeanNN', 'HRV_SDNN',  'HRV_RMSSD', 'HRV_SDSD',
+                            'HRV_CVNN', 'HRV_CVSD', 'HRV_MedianNN', 'HRV_MadNN', 'HRV_MCVNN',
                             'HRV_IQRNN', 'HRV_pNN50', 'HRV_pNN20', 'HRV_HTI', 'HRV_TINN']
                             #'HRV_SDANN1', 'HRV_SDNNI1', 'HRV_SDANN2', 'HRV_SDNNI2', 'HRV_SDANN5', 'HRV_SDNNI5',
 
@@ -241,15 +242,29 @@ def threeway_anova_test():
               "mean_delta", "mean_theta", "mean_alpha", "mean_beta", "mean_gamma",
               "entropy_delta", "entropy_alpha", "entropy_beta"]
 
+    expressions = ["happiness", "sadness", "surprise", "fear",
+                   "anger", "disgust", "neutral", "happiness_b", "sadness_b",
+                   "surprise_b", "fear_b", "anger_b", "disgust_b", "neutral_b"]
+
+    face_features = \
+       ["AU01_r", "AU02_r", "AU04_r", "AU05_r", "AU06_r", "AU07_r",
+        "AU09_r", "AU10_r", "AU12_r", "AU14_r", "AU15_r", "AU17_r",
+        "AU20_r", "AU23_r", "AU25_r", "AU26_r", "AU28_r", "AU45_r"
+        "AU01_c", "AU02_c", "AU04_c", "AU05_c", "AU06_c", "AU07_c",
+        "AU09_c", "AU10_c", "AU12_c", "AU14_c", "AU15_c", "AU17_c",
+        "AU20_c", "AU23_c", "AU25_c", "AU26_c", "AU28_c", "AU45_c"]
+    face_header = face_features + expressions
+
     header = gsr_header[3:]
     header = ppg_header
     header = eeg_header[3:]
+    header = face_header[3:]
     #header = ["arousal", "valence"]
     for variable in header:
         try:
             print(variable)
-            with open("result/conv/eeg_three_way.csv", 'a') as statistics_csv_file:
-        
+            with open("result/conv/face_three_way.csv", 'a') as statistics_csv_file:
+
                 csv_writer = csv.writer(statistics_csv_file)
                 treatment = "task"
                 condition1 = "arousal_b"
@@ -262,8 +277,8 @@ def threeway_anova_test():
                 df.to_csv("temp0.csv", index = False)
                 df = df.groupby(["participant", treatment, condition1, condition2], as_index=False)[variable].mean()
                 df.to_csv("temp.csv", index=False)
-                
-                # I tried to use the ARTool in python, but it raises some errors. 
+
+                # I tried to use the ARTool in python, but it raises some errors.
                 # So I write the code in R and called it here
                 formula = "{0} ~ factor({1}) * factor({2}) * factor({3}) + (1|{4})".format(variable, treatment, condition1, condition2, "participant")
                 result = call_r_function(formula, "temp.csv")
@@ -325,7 +340,7 @@ def display_plots():
         df = joined_data.filter(['participant', treatment, condition1, condition2, variable], axis=1)
         df = df.groupby(["participant", treatment, condition1, condition2], as_index=False)[variable].mean()
         joined_data.reset_index(inplace=True)
-        ''' 
+        '''
         Correlation analysis
         corr = joined_data.corr()
         x, y = corr.values.shape
@@ -357,7 +372,7 @@ def display_plots():
         print(type(corr_positive))
         print("corr_positive", corr_positive[0:5])
         print("corr_negative", corr_negative)
-        '''   
+        '''
         #df.boxplot(column=[variable], by=[treatment, condition1])
 
         fig = plt.figure()
@@ -416,7 +431,7 @@ threeway_anova_test()
     m = artool.art(formula, data=df_r)
     df_result_r = artool.anova(m)
     df_result = pandas2ri.rpy2py_pandasdataframe(df_result_r)
-    print(df_result)         
+    print(df_result)
 
     aov = pg.rm_anova(dv='transformed', within=[condition, treatment], subject='participant', data=df, detailed=True)
     print(aov.round(3).values[0, :])
